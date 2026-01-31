@@ -1,0 +1,29 @@
+services:
+  app:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    image: nexus_realtime_server:latest
+    ports:
+      - "4000:4000"
+    # This allows the container to talk to your Windows host (Postgres)
+    extra_hosts:
+      - "host.docker.internal:host-gateway"
+    environment:
+      # Phoenix / Server Settings
+      - PHX_SERVER=true
+      - PHX_HOST=localhost
+      - PORT=4000
+      - SECRET_KEY_BASE=your_secret_key_at_least_64_chars_long
+      - CHECK_ORIGIN=http://localhost:3000,http://localhost:4000
+      
+      # Database Connection (Individual vars for WalListener)
+      - HOSTNAME=<server address>
+      - DBUSERNAME=<username>
+      - PASSWORD=<password>
+      - DATABASE=<database name>
+      - DBPORT=<database port>
+      - SLOT=<slot name for wal2json>
+      
+      # Ecto Repo Connection
+      - DATABASE_URL=postgres://<username>:<password>@<server address>:<database port>/<database name>
