@@ -1,7 +1,7 @@
-#Nexus Kairos
+# Nexus Kairos
 
 
-##Hello and welcome to Nexus Kairos
+## Hello and welcome to Nexus Kairos
 
 This is a realtime server that can listen to a postgres database in realtime and emit updates based on your inital query
 A developer can also use this as a regular websocket server
@@ -11,7 +11,7 @@ There will be a feature that allows any database to be accepted, but you wont be
 
 
 
-##Quick Start
+## Quick Start
 
 ### Using the realtime server
 
