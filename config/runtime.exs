@@ -25,6 +25,13 @@ source!([
   System.get_env() # Crucial: allows actual system vars to override files
 ])
 
+enable_postgres =
+  System.get_env("ENABLE_POSTGRES", "false")
+  |> String.downcase()
+  |> Kernel.==("true")
+
+config :nexus_realtime_server, :enable_postgres, enable_postgres
+
 
 cors_origins =
   System.get_env("CORS_ORIGINS", "http://localhost:3000")

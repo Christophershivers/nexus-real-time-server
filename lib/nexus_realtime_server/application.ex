@@ -8,9 +8,10 @@ alias NexusRealtimeServer.ETSQueryCache
 
   @impl true
   def start(_type, _args) do
+    enable_postgres = Application.get_env(:nexus_realtime_server, :enable_postgres)
     children = [
       NexusRealtimeServerWeb.Telemetry,
-      NexusRealtimeServer.Repo,
+      if(enable_postgres, do: NexusRealtimeServer.Repo, else: nil),
       {DNSCluster, query: Application.get_env(:nexus_realtime_server, :dns_cluster_query) || :ignore},
       {Phoenix.PubSub, name: NexusRealtimeServer.PubSub},
       # Start a worker by calling: NexusRealtimeServer.Worker.start_link(arg)
@@ -20,6 +21,7 @@ alias NexusRealtimeServer.ETSQueryCache
       WalListener,
       ETSQueryCache
     ]
+    |> Enum.reject(&is_nil/1)
 
     # See https://hexdocs.pm/elixir/Supervisor.html
     # for other strategies and supported options
