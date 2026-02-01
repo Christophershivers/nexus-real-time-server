@@ -8,9 +8,9 @@ There will be a feature that allows any database to be accepted, but you wont be
 
 
 
-## Quick Start
+# Quick Start
 
-### Using the realtime server
+### Using the realtime server SDK
 
 `Npm i @nexusrt/kairos`
 
@@ -50,9 +50,9 @@ if your private messages are based on the url, use the url query parameter as th
 
 It’s almost the same as using it as a regular websocket server with a few changes 
 ```
-nexus = await NexusRT.create('ws://<link_to_server>/realtime', {userid});
+nexus = await NexusRT.create('ws://<link_to_server>/realtime', jwt, {userid});
 nexus.connect();
-await nexus.current.useUserChannel("<name_of_topic", { userid });
+await nexus.useUserChannel("<name_of_topic", { userid });
 const { result } = await nexus
   .select('*')
   .from('<name_of_table>')
@@ -68,8 +68,54 @@ const { result } = await nexus
 	alias: '<name_of_alias>',
 });
 ```
+Then listen to the incoming inserts, updates, or deletes coming from the database
+'''
+nexus.on('<name_of_event>', (msg) => {
+  console.log('roast:',msg);
+});
+'''
+The event name is the same event you put in the subscribeAndJoinRoutes.
 
 
+## Setting Up Postgres
+
+Before you use this on postgres there are a couple of things you need to do first. 
+First thing is make sure you have Wal2Json installed in Postgres. 
+if you dont know how to do that then I have created a postgres docker image with it installed.
+
+`docker pull nexusrt/postgres-wal2json:latest`
+
+There's a dockerfile and docker compose file under the docker folder. That's where i setup postgres.
+You can take that file and run it. Or look at how i set it up and copy the environment variables
+
+these env var are the most important. Make sure these are enabled
+```
+-c wal_level=logical
+-c max_wal_senders=10
+-c max_replication_slots=10
+```
+go inside the postgres image and make sure you have wallevel set to logcical 
+
+`ALTER SYSTEM SET wal_level = 'logical';`
+ after that restart postgres.
+
+ Then create a replication slot for Wal2Json
+
+ `SELECT pg_create_logical_replication_slot('wal2json_slot', 'wal2json');`
+
+ After that you have one more thing. By default Wal2Json does not give you all the data from a delete
+ in order for nexus kairos to work correctly with deletes you need to do this last step.
+
+ Create all the tables you want to create then after you did that use this query so Wal2Json can get all data from deletes
+
+ `ALTER TABLE <table_name> REPLICA IDENTITY FULL;`
+
+ Now inserts, updates, and deletes should give you everything you need
+ Also caveats for deletes. Deletes only send the id of the insert and the database operation.
+ Use that to find whatever record was deleted and delete it from memory.
+
+
+ ## Setting Up Kairos Server
 
 # NexusRealtimeServer
 
