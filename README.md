@@ -146,7 +146,18 @@ DATABASE_URL: string
 |Name|Description|Example
 |-|-|-|
 |HOSTNAME|Database host|localhost/219.42.23.176/<domain_name>.com
-
+|DBUSERNAME|Database user| username123
+|PASSWORD|Database password|password123
+|DATABASE|Database name|postgres
+|DBPORT|Database port|5432
+|SLOT|Wal2Json Replication slot namet| wal2json_slot
+|POOL_SIZE|DB pool size|40
+|MAX_CONCURRENCY|Worker concurrency|40
+|AUTH_SECRET|JWT signing secret| op1VZ8yly2HBAGds9Squaet2TyMsoWJ1LrkAnH3kM7p
+|AUTH_ENABLED|Enable JWT auth|false
+|CORS_ORIGINS|Allowed CORS origins|http://localhost:3000,https://<domain_name>.com
+|WEBSOCKET_ORIGINS|Allowed WS origins|[localhost/219.42.23.176/<domain_name>.com](http://localhost:3000,https://<domain_name>.com)
+|DATABASE_URL|Full DB connection string|postgres://<username>:<password>@<server address>:<database port>/<database name>
 
 # NexusRealtimeServer
 
