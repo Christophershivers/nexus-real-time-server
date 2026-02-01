@@ -157,7 +157,7 @@ DATABASE_URL: string
 |AUTH_ENABLED|Enable JWT auth|false
 |CORS_ORIGINS|Allowed CORS origins|http://localhost:3000,https://<domain_name>.com
 |WEBSOCKET_ORIGINS|Allowed WS origins|http://localhost:3000,https://<domain_name>.com
-|DATABASE_URL|Full DB connection string|postgres://<user_name>:<password>@<server_address>:<database_port>/<database_name>
+|DATABASE_URL|Full DB connection string|postgres://<your_username>:<your_password>@<server_address>:<database_port>/<database_name>
 
 # NexusRealtimeServer
 
