@@ -12,7 +12,7 @@ There will be a feature that allows any database to be accepted, but you wont be
 
 ### Using the realtime server
 
-Npm i nexusrt/kairos
+`Npm i nexusrt/kairos`
 
 You have two options to use kairos as a regular websocket server. Which means to follow a topic and subscribe to an event,
 or to use it as a realtime query engine
@@ -22,22 +22,23 @@ or to use it as a realtime query engine
 Let's first start off by talking about using it as a regular websocket server.
 This means two clients connect to the server by subscribing to the same topic.
 And then listening to the same event.
-
+```
 nexus = await NexusRT.create('ws://<link_to_server>/realtime');
 nexus2.current.connect();
 await nexus2.current.useUserChannel("<topic_name>”);
 nexus.on('<name_of_event', (msg) => {
   console.log('roast:',msg);
 });
+```
 
 
 To send to the event you’re subscribed to or someone else is subscribed to you have two options. Either emit to the topic you already connected to and push to the event. Or pick the topic and event
 
 Choose which event and topic:
-nexus.emitTo('<name_of_topic>', '<name_of_event>', {body:{<payload>}})
+`nexus.emitTo('<name_of_topic>', '<name_of_event>', {body:{<payload>}})`
 
 Emit to the topic your nexus has subscribed to earlier:
-nexus.emit('<name_of_event>', {body:{<payload>}})
+`nexus.emit('<name_of_event>', {body:{<payload>}})`
 
 Now both clients can talk to each other. This is perfect for real time chat apps that are public. if you want a private chatapp, make sure your users are subscribed to the correct topic
 if your private messages are based on the url, use the url query parameter as the topic.
@@ -45,6 +46,7 @@ if your private messages are based on the url, use the url query parameter as th
 #### Using the realtime query engine
 
 It’s almost the same as using it as a regular websocket server with a few changes 
+```
 nexus = await NexusRT.create('ws://<link_to_server>/realtime', {userid});
 nexus.connect();
 await nexus.current.useUserChannel("<name_of_topic", { userid });
@@ -62,6 +64,7 @@ const { result } = await nexus
 	pk: '<name_of_primary_key>',
 	alias: '<name_of_alias>',
 });
+```
 
 
 
