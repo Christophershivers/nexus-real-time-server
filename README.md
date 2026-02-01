@@ -143,8 +143,10 @@ CORS_ORIGINS: string with commas
 WEBSOCKET_ORIGINS: string
 DATABASE_URL: string
 ```
+|Name|Description|Example
+|-|-|-|
+|HOSTNAME|Database host|localhost/219.42.23.176/<domain_name>.com
 
-`
 
 # NexusRealtimeServer
 
