@@ -156,8 +156,8 @@ DATABASE_URL: string
 |AUTH_SECRET|JWT signing secret| op1VZ8yly2HBAGds9Squaet2TyMsoWJ1LrkAnH3kM7p
 |AUTH_ENABLED|Enable JWT auth|false
 |CORS_ORIGINS|Allowed CORS origins|http://localhost:3000,https://<domain_name>.com
-|WEBSOCKET_ORIGINS|Allowed WS origins|[localhost/219.42.23.176/<domain_name>.com](http://localhost:3000,https://<domain_name>.com)
-|DATABASE_URL|Full DB connection string|postgres://<username>:<password>@<server address>:<database port>/<database name>
+|WEBSOCKET_ORIGINS|Allowed WS origins|localhost/219.42.23.176/<domain_name>.com, http://localhost:3000,https://<domain_name>.com
+|DATABASE_URL|Full DB connection string|postgres://<username>:<password>@<server_address>:<database_port>/<database_name>
 
 # NexusRealtimeServer
 
