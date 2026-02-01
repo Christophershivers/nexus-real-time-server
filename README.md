@@ -12,7 +12,10 @@ There will be a feature that allows any database to be accepted, but you wont be
 
 ### Using the realtime server
 
-`Npm i nexusrt/kairos`
+`Npm i @nexusrt/kairos`
+
+then import it using 
+`import { NexusRT } from '@nexusrt/kairos';`
 
 You have two options to use kairos as a regular websocket server. Which means to follow a topic and subscribe to an event,
 or to use it as a realtime query engine
