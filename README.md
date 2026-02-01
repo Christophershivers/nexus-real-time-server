@@ -117,6 +117,35 @@ go inside the postgres image and make sure you have wallevel set to logcical
 
  ## Setting Up Kairos Server
 
+ Setting up the Kairos server is really simple. This server can be used as a regular WebSocket server and or a real-time query engine. I have a Docker image for it
+ `docker pull nexusrt/nexusrt:latest`
+
+You can build this yourself when you clone the repository. but the fastest way is to use the Docker image. If you made changes to the repository locally, you can build it
+`docker build -t <name_of_docker_image> .`
+
+You can use Kairos with portainer, coolify, etc or you can run it from Docker itself from a linux server. Which ever you are comfortable with.
+When using Kairos there are some env var you need to know about.
+
+```
+HOSTNAME: string
+DBUSERNAME: string
+PASSWORD: string
+DATABASE: string
+DBPORT: string
+SLOT: string
+POOL_SIZE: integer
+MAX_CONCURRENCY: integer
+BATCH_SIZE: integer
+CHUNK_SIZE: integer
+AUTH_SECRET: string
+AUTH_ENABLED: boolean
+CORS_ORIGINS: string with commas
+WEBSOCKET_ORIGINS: string
+DATABASE_URL: string
+```
+
+`
+
 # NexusRealtimeServer
 
 To start your Phoenix server:
