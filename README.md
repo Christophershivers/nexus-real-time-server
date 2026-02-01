@@ -142,6 +142,7 @@ AUTH_ENABLED: boolean
 CORS_ORIGINS: string with commas
 WEBSOCKET_ORIGINS: string
 DATABASE_URL: string
+ENABLE_POSTGRES: boolean
 ```
 |Name|Description|Example
 |-|-|-|
@@ -158,6 +159,7 @@ DATABASE_URL: string
 |CORS_ORIGINS|Allowed CORS origins|http://localhost:3000,https://<domain_name>.com
 |WEBSOCKET_ORIGINS|Allowed WS origins|http://localhost:3000,https://<domain_name>.com
 |DATABASE_URL|Full DB connection string|postgres://<your_username>:<your_password>@<server_address>:<database_port>/<database_name>
+|ENABLE_POSTGRES|enables postgres functionality(false by default)|true/false
 
 # NexusRealtimeServer
 
