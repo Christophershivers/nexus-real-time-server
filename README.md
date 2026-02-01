@@ -155,7 +155,7 @@ ENABLE_POSTGRES: boolean
 |POOL_SIZE|DB pool size|40
 |MAX_CONCURRENCY|Worker concurrency|40
 |AUTH_SECRET|JWT signing secret| op1VZ8yly2HBAGds9Squaet2TyMsoWJ1LrkAnH3kM7p
-|AUTH_ENABLED|Enable JWT auth|false
+|AUTH_ENABLED|Enable JWT authentication (false by default)|true/false
 |CORS_ORIGINS|Allowed CORS origins|http://localhost:3000,https://<domain_name>.com
 |WEBSOCKET_ORIGINS|Allowed WS origins|http://localhost:3000,https://<domain_name>.com
 |DATABASE_URL|Full DB connection string|postgres://<your_username>:<your_password>@<server_address>:<database_port>/<database_name>
