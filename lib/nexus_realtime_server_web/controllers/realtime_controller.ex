@@ -4,7 +4,8 @@ defmodule NexusRealtimeServerWeb.RealtimeController do
   alias NexusRealtimeServer.Auth.VerifyToken, as: Token
 
   def realtime(conn, _params) do
-    NexusRealtimeServerWeb.Endpoint.broadcast("user", "new_msg", %{body: conn.body_params["text"]})
+    queryParams = conn.body_params
+    NexusRealtimeServerWeb.Endpoint.broadcast(queryParams["topic"], queryParams["event"], %{body: queryParams["body"]})
     json(conn, conn.body_params)
   end
 
