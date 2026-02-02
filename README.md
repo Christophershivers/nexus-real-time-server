@@ -11,11 +11,13 @@ There will be a feature that allows any database to be accepted, but you won't b
 # Quick Start
 
 ### Using the realtime server SDK
-
+You can install the SDK using node package manager
 `npm i @nexusrt/kairos`
 
 Then import it using 
 `import { NexusRT } from '@nexusrt/kairos';`
+
+I only tested this on React/NextJS. But it does work on NodeJS, but it needs some finessing. I will come out with sdk for servers soon. It should work on angular svelete and other JavaScript frameworks. However, i haven't tested those.
 
 You have two options to use Kairos as a regular WebSocket server. Which means to follow a topic and subscribe to an event,
 or to use it as a realtime query engine
