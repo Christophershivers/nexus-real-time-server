@@ -161,6 +161,40 @@ ENABLE_POSTGRES: boolean
 |DATABASE_URL|Full DB connection string|postgres://<your_username>:<your_password>@<server_address>:<database_port>/<database_name>
 |ENABLE_POSTGRES|enables postgres functionality(false by default)|true/false
 
+
+# Benchmarks
+I have done a couple of benchmarks. In the K6 folder, you'll find what I did. This is my first time benchmarking, so I could have done it wrong. If you see anything that's wrong or abnormal, let me know.
+
+## Current Users(idle)
+|CPU|RAM|Concurrent Users|Passed|
+|-|-|-|-|
+|1GB|1|10,000|check|
+|4gb|2|10,000|check|
+|8gb|4|10,000|check|
+
+Based on this benchmark, I have found that a 1gb 1 cpu server from Linode can hold 10K concurrent users, but they are idled. Which means all they did was register in the Mnesia in-memory database, and received a broadcast of their query and sat there not doing anything
+
+## Concurrent Users(receving messages)
+|CPU|RAM|Concurrent Users|Time to complete|latency for one message|Records/s|Broadcast/s|
+|-|-|-|-|-|
+|1GB|1|5,000|20s|333ms|3|15K
+|4gb|2|5,000|12s|200ms|5|25k
+|8gb|4|5,000|7s|117ms|8.5|42.8K
+
+This test had 5000 concurrent users all receiving the same message; in other words, every user in the Mnesia database received a broadcast. For the 1gb 1 cpu server, it took 20 seconds to receive all 60 messages, which means each user had 3 messages persecond. With the websocket server broadcasting 15K messages persecond. For the 4gb 2 cpu server, it completed 60 messages in 12 seconds, which resulted in 5 records per second per connected user, and a broadcast of 25K/s. Finally, the 8GB 4 cpu server completed it in 7 seconds. with 8.5 records per user, and 42.8K broadcast/s.
+
+## Concurrent Users(receiving split messages)
+
+The final benchmark I did was to see how well the server would do if everyone weren't listening to the same record. So I split it by using a modulus. I split 5000 into 4. So there will be 1250 users listening to a record instead of the entire 5000. With the VU number, I used the modulus operator by 4, so a __VU id of 1 would be 1%4. __VU id of 2 would be 2%4. This would give me a userid of 1 and 2, respectively. The id ranged from 0 to 3, so I personally listened to user 0. In total userid from 0-3 had 1250 concurrent users listening to it each, with a total of 5000 concurrent users overall. 
+
+To put this into perspective, if a server has 1250 concurrent users and they were all listening to the same record, then for 60 messages, it would be completed in 3 seconds, giving you 20 messages/sec with a 100k broadcast messages/sec
+
+|CPU|RAM|Concurrent Users|per record|Time to complete|latency for one message|Records/s|Broadcast/s|
+|-|-|-|-|-|-|
+|4gb|2|5,000|1,250|117ms|7s|85|42.8k
+
+All of these benchmarks are under the k6 folder.
+
 # NexusRealtimeServer
 
 To start your Phoenix server:
