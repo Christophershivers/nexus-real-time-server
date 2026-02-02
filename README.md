@@ -70,7 +70,7 @@ const { result } = await nexus
 	alias: '<name_of_alias>',
 });
 ```
-*You can use multiple join statements, but not multiple where statements. To use multiple where statements, just write them inside the string*
+**You can use multiple join statements, but not multiple where statements. To use multiple where statements, just write them inside the string**
 
 Then listen to the incoming inserts, updates, or deletes coming from the database
 ```
