@@ -191,7 +191,7 @@ To put this into perspective, if a server has 1250 concurrent users and they wer
 
 |CPU|RAM|Concurrent Users|per record|Time to complete|latency for one message|Records/s|Broadcast/s|
 |-|-|-|-|-|-|-|-|
-|4gb|2|5,000|1,250|117ms|7s|85|42.8k
+|4gb|2|5,000|1,250|117ms|7s|8.5|42.8k
 
 All of these benchmarks are under the k6 folder.
 
