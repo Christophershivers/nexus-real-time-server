@@ -170,7 +170,7 @@ FILTER_TABLES: string
 |ENABLE_POSTGRES|enables postgres functionality(false by default)|true/false
 |FILTER_TABLES|allows you to add or filter out tables from wal2json(empty by default)|"\"add-tables or filter-tables\" '<schema_name>.<table_name1>,<schema_name>.<table_name2>'"|
 
-**For the FILTER_TABLES variable, the add-tables adds the table you want to see. Whereas filter-tables adds every except for the table you want to see.**
+**For the FILTER_TABLES variable, the add-tables adds the table you want to see. Whereas filter-tables adds every table except for the table you want to see.**
 
 # Pushing Realtime Messages From a Different Server
 In Kairos, it's also possible to push a realtime message from a different server to the client using HTTP. The url for that is `https://<your_domain_name>.com/realtime`.
