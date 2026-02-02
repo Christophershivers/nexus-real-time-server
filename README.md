@@ -81,7 +81,8 @@ nexus.on('<name_of_event>', (msg) => {
 });
 ```
 The event name is the same event you put in the subscribeAndJoinRoutes.
-
+#### different types of SQL statements
+. The only SQL statements that are accepted are select, from, join, where, groupBy, having, orderBy, and limit.
 
 ## Setting Up Postgres
 
