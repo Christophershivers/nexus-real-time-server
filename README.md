@@ -69,13 +69,14 @@ const { result } = await nexus
 	pk: '<name_of_primary_key>',
 	alias: '<name_of_alias>',
 });
+*You can use multiple join statements, but not multiple where statements. To use multiple where statements, just write them inside the string*
 ```
 Then listen to the incoming inserts, updates, or deletes coming from the database
-'''
+```
 nexus.on('<name_of_event>', (msg) => {
   console.log('roast:',msg);
 });
-'''
+```
 The event name is the same event you put in the subscribeAndJoinRoutes.
 
 
