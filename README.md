@@ -12,7 +12,7 @@ There will be a feature that allows any database to be accepted, but you wont be
 
 ### Using the realtime server SDK
 
-`Npm i @nexusrt/kairos`
+`npm i @nexusrt/kairos`
 
 then import it using 
 `import { NexusRT } from '@nexusrt/kairos';`
