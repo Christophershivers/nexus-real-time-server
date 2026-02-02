@@ -176,7 +176,7 @@ Based on this benchmark, I have found that a 1gb 1 cpu server from Linode can ho
 
 ## Concurrent Users(receving messages)
 |CPU|RAM|Concurrent Users|Time to complete|latency for one message|Records/s|Broadcast/s|
-|-|-|-|-|-|
+|-|-|-|-|-|-|-|
 |1GB|1|5,000|20s|333ms|3|15K
 |4gb|2|5,000|12s|200ms|5|25k
 |8gb|4|5,000|7s|117ms|8.5|42.8K
@@ -190,7 +190,7 @@ The final benchmark I did was to see how well the server would do if everyone we
 To put this into perspective, if a server has 1250 concurrent users and they were all listening to the same record, then for 60 messages, it would be completed in 3 seconds, giving you 20 messages/sec with a 100k broadcast messages/sec
 
 |CPU|RAM|Concurrent Users|per record|Time to complete|latency for one message|Records/s|Broadcast/s|
-|-|-|-|-|-|-|
+|-|-|-|-|-|-|-|-|
 |4gb|2|5,000|1,250|117ms|7s|85|42.8k
 
 All of these benchmarks are under the k6 folder.
