@@ -22,8 +22,11 @@ defmodule WalListener do
       replication: "database"
     ]
 
+    ftables = Application.get_env(:nexus_realtime_server, :filter_tables)
+    plugin_opts = ~c"#{ftables}"
+
     with {:ok, conn} <- :epgsql.connect(host, user, password, opts),
-        :ok <- :epgsql.start_replication(conn, String.to_charlist(config[:slot]), self(), %{}, ~c"0/0", ~c"") do
+        :ok <- :epgsql.start_replication(conn, String.to_charlist(config[:slot]), self(), %{}, ~c"0/0", plugin_opts) do
       {:ok, %{conn: conn}}
     else
       {:error, reason} ->

@@ -24,6 +24,9 @@ source!([
   System.get_env() # Crucial: allows actual system vars to override files
 ])
 
+filter_tables = System.get_env("FILTER_TABLES", "")
+config :nexus_realtime_server, :filter_tables, filter_tables
+
 enable_postgres =
   System.get_env("ENABLE_POSTGRES", "false")
   |> String.downcase()
