@@ -161,6 +161,9 @@ ENABLE_POSTGRES: boolean
 |DATABASE_URL|Full DB connection string|postgres://<your_username>:<your_password>@<server_address>:<database_port>/<database_name>
 |ENABLE_POSTGRES|enables postgres functionality(false by default)|true/false
 
+# Security 
+
+Nexus Kairos does have security built in; in later version this will get reworked so users won't have to put the address to the websocket server itself. For now, the way security works is optional. In the Kairos server, you would set `AUTH_ENABLED` env var to true and have a JWT secret set in the env var `AUTH_SECRET`. Then in the SDK you would have the jwt set with the jwt token`nexus = await NexusRT.create('ws://<link_to_server>/realtime', jwt, {userid});`. In the future, you will be able to use HTTP-only tokens, so it won't be exposed. There are also checks on the server side for anything other than select statements for the query. Anything that has delete, update, or insert won't be accepted.
 
 # Benchmarks
 I have done a couple of benchmarks. In the K6 folder, you'll find what I did. This is my first time benchmarking, so I could have done it wrong. If you see anything that's wrong or abnormal, let me know.
