@@ -81,7 +81,8 @@ nexus.on('<name_of_event>', (msg) => {
 });
 ```
 The event name is the same event you put in the subscribeAndJoinRoutes.
-
+#### different types of SQL statements
+. The only SQL statements that are accepted are select, from, join, where, groupBy, having, orderBy, and limit.
 
 ## Setting Up Postgres
 
@@ -166,6 +167,18 @@ ENABLE_POSTGRES: boolean
 |WEBSOCKET_ORIGINS|Allowed WS origins|http://localhost:3000,https://<domain_name>.com
 |DATABASE_URL|Full DB connection string|postgres://<your_username>:<your_password>@<server_address>:<database_port>/<database_name>
 |ENABLE_POSTGRES|enables postgres functionality(false by default)|true/false
+
+# Pushing Realtime Messages From a Different Server
+In Kairos, it's also possible to push a realtime message from a different server to the client using HTTP. The url for that is `https://<your_domain_name>.com/realtime`.
+With the realtime route, you can push messages in realtime. In order to use this in your body, make sure you set the topic and event
+```
+{
+    "topic": "<topic>",
+    "event": "<event>",
+    "body":{<payload>}
+}
+```
+If you have auth enabled, then you will have to send the jwt as a header. In your header, use `Authorization: Bearer <jwt>`.
 
 # Security 
 
