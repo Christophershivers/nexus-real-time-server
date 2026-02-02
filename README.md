@@ -98,7 +98,7 @@ These env vars are the most important. Make sure these are enabled
 -c max_wal_senders=10
 -c max_replication_slots=10
 ```
-Go inside the PostgreSQL image and make sure you have wallevel set to logcical 
+Go inside the PostgreSQL image and make sure you have wallevel set to logcical if the environment variable didn't work
 
 `ALTER SYSTEM SET wal_level = 'logical';`
  After that, restart PostgreSQL.
@@ -122,7 +122,7 @@ Go inside the PostgreSQL image and make sure you have wallevel set to logcical
  ## Setting Up Kairos Server
 
  Setting up the Kairos server is really simple. This server can be used as a regular WebSocket server and or a real-time query engine. I have a Docker image for it
- `docker pull nexusrt/nexusrt:latest`
+ `docker pull neexus/kairos:latest`
 
 You can build this yourself when you clone the repository. But the fastest way is to use the Docker image. If you made changes to the repository locally, you can build it
 `docker build -t <name_of_docker_image> .`
@@ -188,7 +188,7 @@ Based on this benchmark, I have found that a 1gb 1 cpu server from Linode can ho
 |4gb|2|5,000|12s|200ms|5|25k
 |8gb|4|5,000|7s|117ms|8.5|42.8K
 
-This test had 5000 concurrent users all receiving the same message; in other words, every user in the Mnesia database received a broadcast. For the 1gb 1 cpu server, it took 20 seconds to receive all 60 messages, which means each user had 3 messages persecond. With the websocket server broadcasting 15K messages persecond. For the 4gb 2 cpu server, it completed 60 messages in 12 seconds, which resulted in 5 records per second per connected user, and a broadcast of 25K/s. Finally, the 8GB 4 cpu server completed it in 7 seconds. with 8.5 records per user, and 42.8K broadcast/s.
+This test had 5000 concurrent users all receiving the same message; in other words, every user in the Mnesia database received a broadcast. For the 1gb 1 cpu server, it took 20 seconds to receive all 60 messages, each message taking 333ms to broadcast, which means each user had 3 messages persecond. With the websocket server broadcasting 15K messages persecond. For the 4gb 2 cpu server, it completed 60 messages in 12 seconds, each message taking 200ms to broadcast, which resulted in 5 records per second per connected user, and a broadcast of 25K/s. Finally, the 8GB 4 cpu server completed it in 7 seconds. Each message takes 117ms to broadcast,  with 8.5 records per user, and 42.8K broadcast/s.
 
 ## Concurrent Users(receiving split messages)
 
@@ -200,6 +200,7 @@ To put this into perspective, if a server has 1250 concurrent users and they wer
 |-|-|-|-|-|-|-|-|
 |4gb|2|5,000|1,250|117ms|7s|8.5|42.8k
 
+Based on these results, if 1250 users are listening to user id 0-3 each, then it would take 7 seconds to complete 60 messages for each user. This would mean each message took 117ms, 8.5 records per user per second, with a broadcast of 42.8k/s.
 All of these benchmarks are under the k6 folder.
 
 # NexusRealtimeServer
