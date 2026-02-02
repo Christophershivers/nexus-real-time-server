@@ -8,7 +8,7 @@ const broadcastLatency = new Trend("broadcast_latency_ms");
 
 export const options = {
   scenarios: Object.fromEntries(
-    Array.from({ length: 5 }, (_, i) => [
+    Array.from({ length: 20 }, (_, i) => [
       `batch${i + 1}`,
       {
         executor: "per-vu-iterations",
@@ -39,12 +39,28 @@ function phoenixFrame(joinRef, ref, topic, event, payload) {
 export default function () {
   const url = "ws://<your_server_address>:4000/realtime/websocket?vsn=2.0.0";
 
-  // The Routing ID and Channel Topic are now identical
+  // Split VUs into 4 buckets (0..3):
+  // 1->1, 2->2, 3->3, 4->0, 5->1 ...
+  const fieldValueNum = __VU % 4;
+  const field_value = String(fieldValueNum);
+
+  // Unique routing id per VU (unchanged)
   const userid = String(100000 + __VU);
-  //change this to the correct route topic
-  const channelTopic =
-    __ENV.ROUTE_TOPIC ||
-    "rt:6446eee0f3058b1e579d16882291a586492ec2e6aa05bbb5713d3c0701b25e01:0";
+
+  // Use the bucket value in the route topic (instead of hardcoded :57)
+  let channelTopic;
+  //change these to the correct route topic
+  if(fieldValueNum === 0){
+    channelTopic = `rt:6446eee0f3058b1e579d16882291a586492ec2e6aa05bbb5713d3c0701b25e01:0`;
+  }
+  else if(fieldValueNum === 1){
+    channelTopic = `rt:032d82aac02d5d559e305fbb29738cd11c64b2ec8ff9fa1e667498499c236c23:1`;
+  }else if(fieldValueNum === 2){
+    channelTopic = `rt:4b6219d424cb89f0aa2f369774ae3b20ddd311859ba29c1284a306b1d4e89ec6:2`;
+  }else{
+    channelTopic = `rt:cc1a664e725bf80475fd22f22253fe9f6b13a575a0f1b6b56ad3f99de1775a19:3`;
+  }
+    
 
   const params = {
     headers: { "Sec-WebSocket-Protocol": "phoenix" },
@@ -55,16 +71,10 @@ export default function () {
     let hbTimer = null;
 
     socket.on("open", () => {
-      // Step 1: Join using the exact userid as the channel topic
-      socket.send(
-        phoenixFrame("1", "1", channelTopic, "phx_join", { userid })
-      );
+      socket.send(phoenixFrame("1", "1", channelTopic, "phx_join", { userid }));
 
-      // Heartbeat to keep the connection alive
       hbTimer = socket.setInterval(() => {
-        socket.send(
-          phoenixFrame(null, "hb", "phoenix", "heartbeat", {})
-        );
+        socket.send(phoenixFrame(null, "hb", "phoenix", "heartbeat", {}));
       }, 50000);
     });
 
@@ -78,53 +88,36 @@ export default function () {
 
       const [joinRef, msgRef, topic, event, payload] = msg;
 
-      // Step 2: On Join OK, send the Nexus Matcher Subscription
       if (event === "phx_reply" && msgRef === "1" && payload?.status === "ok") {
-        console.log("ok");
-
         subSentAt = Date.now();
 
         socket.send(
           phoenixFrame("1", "2", channelTopic, "subscribe", {
-            topic: "posts:userid", // Nexus matching topic
-            userid: userid,        // Routing ID
+            topic: "posts:userid",
+            userid: userid,
             table_field: "userid",
-            field_value: "57",
+            field_value: field_value,         // <-- bucket (0..3)
             equality: "eq",
-            query:
-              "select * from posts where (userid = 57) order by updated_at desc limit 5",
-            event: "posts",        // Event to listen for
+            query: `select * from posts where (userid = ${field_value}) order by updated_at desc limit 5`,
+            event: "posts",
             pk: "id",
             alias: null,
           })
         );
       }
 
-      // Step 3: Track Subscription confirmation
       if (event === "phx_reply" && msgRef === "2" && payload?.status === "ok") {
         subOk.add(1);
-        if (subSentAt) {
-          subLatency.add(Date.now() - subSentAt);
-        }
+        if (subSentAt) subLatency.add(Date.now() - subSentAt);
       }
 
-      // Step 4: BROADCAST LISTENER
-      // All VUs idle here waiting for broadcasts from your external machine
       if (event === "posts") {
         const receivedAt = Date.now();
         const sentAt = payload?.sent_at;
-
-        console.log("event received:");
-
-        if (sentAt) {
-
-          const latency = receivedAt - sentAt;
-          broadcastLatency.add(latency);
-        }
+        if (sentAt) broadcastLatency.add(receivedAt - sentAt);
       }
     });
 
-    // Hold connection open for 2.5 minutes
     socket.setTimeout(() => socket.close(), 150000);
 
     socket.on("close", () => {

@@ -47,7 +47,7 @@ function phoenixFrame(joinRef, ref, topic, event, payload) {
 }
 
 export default function () {
-  const url = "ws://172.232.27.39:4000/realtime/websocket?vsn=2.0.0";
+  const url = "ws://<your_server_address>:4000/realtime/websocket?vsn=2.0.0";
   const userid = String(100000 + __VU);
   const channelTopic = `user:${userid}`;
   const params = { headers: { "Sec-WebSocket-Protocol": "phoenix" } };
