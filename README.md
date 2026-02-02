@@ -50,6 +50,8 @@ if your private messages are based on the url, use the URL query parameter as th
 
 #### Using the realtime query engine
 
+**Make sure the `ENABLE_POSTGRES` environment variable is set to true inside the Kairos server.**
+
 It’s almost the same as using it as a regular WebSocket server, with a few changes 
 ```
 nexus = await NexusRT.create('ws://<link_to_server>/realtime', jwt, {userid});
@@ -173,7 +175,7 @@ Nexus Kairos does have security built in; in later version this will get reworke
 I have done a couple of benchmarks. In the K6 folder, you'll find what I did. This is my first time benchmarking, so I could have done it wrong. If you see anything that's wrong or abnormal, let me know.
 
 ## Current Users(idle)
-|CPU|RAM|Concurrent Users|Passed|
+|RAM|CPU|Concurrent Users|Passed|
 |-|-|-|-|
 |1GB|1|10,000|✅|
 |4gb|2|10,000|✅|
@@ -182,7 +184,7 @@ I have done a couple of benchmarks. In the K6 folder, you'll find what I did. Th
 Based on this benchmark, I have found that a 1gb 1 cpu server from Linode can hold 10K concurrent users, but they are idled. Which means all they did was register in the Mnesia in-memory database, received a broadcast of their query, and sat there not doing anything
 
 ## Concurrent Users(receving messages)
-|CPU|RAM|Concurrent Users|Time to complete|latency for one message|Records/s|Broadcast/s|
+|RAM|CPU|Concurrent Users|Time to complete|latency for one message|Records/s|Broadcast/s|
 |-|-|-|-|-|-|-|
 |1GB|1|5,000|20s|333ms|3|15K
 |4gb|2|5,000|12s|200ms|5|25k
@@ -196,7 +198,7 @@ The final benchmark I did was to see how well the server would do if everyone we
 
 To put this into perspective, if a server has 1250 concurrent users and they were all listening to the same record, then for 60 messages, it would be completed in 3 seconds, giving you 20 messages/sec with a 100k broadcast messages/sec
 
-|CPU|RAM|Concurrent Users|per record|Time to complete|latency for one message|Records/s|Broadcast/s|
+|RAM|CPU|Concurrent Users|per record|Time to complete|latency for one message|Records/s|Broadcast/s|
 |-|-|-|-|-|-|-|-|
 |4gb|2|5,000|1,250|117ms|7s|8.5|42.8k
 
