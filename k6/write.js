@@ -8,7 +8,7 @@ const broadcastLatency = new Trend("broadcast_latency_ms");
 
 export const options = {
   scenarios: Object.fromEntries(
-    Array.from({ length: 20 }, (_, i) => [
+    Array.from({ length: 5 }, (_, i) => [
       `batch${i + 1}`,
       {
         executor: "per-vu-iterations",
@@ -43,7 +43,7 @@ export default function () {
   const userid = String(100000 + __VU);
   const channelTopic =
     __ENV.ROUTE_TOPIC ||
-    "rt:9984f8cc456dd02f9390a00d8687fae3ec99f10b94852212b5ba405f83fc20c1:57";
+    "rt:6446eee0f3058b1e579d16882291a586492ec2e6aa05bbb5713d3c0701b25e01:0";
 
   const params = {
     headers: { "Sec-WebSocket-Protocol": "phoenix" },
