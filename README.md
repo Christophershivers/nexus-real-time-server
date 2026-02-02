@@ -1,10 +1,10 @@
 <h1 align="center">Welcome to Nexus Kairos</h1>
 
-This is a realtime server that can listen to a postgres database in realtime and emit updates based on your inital query.
-A developer can also use this as a regular websocket server
+This is a realtime server that can listen to a PostgreSQL database in realtime and emit updates based on your initial query.
+A developer can also use this as a regular WebSocket server
 
-So far only postgres is works natively but other database will be accepted. Suchas Mysql, Cassandra, SQLite, etc
-There will be a feature that allows any database to be accepted, but you wont be able to listen to the database
+So far, only PostgreSQL works natively, but other databases will be accepted. Suchas Mysql, Cassandra, SQLite, etc
+There will be a feature that allows any database to be accepted, but you won't be able to listen to the database
 
 
 
@@ -14,15 +14,15 @@ There will be a feature that allows any database to be accepted, but you wont be
 
 `npm i @nexusrt/kairos`
 
-then import it using 
+Then import it using 
 `import { NexusRT } from '@nexusrt/kairos';`
 
-You have two options to use kairos as a regular websocket server. Which means to follow a topic and subscribe to an event,
+You have two options to use Kairos as a regular WebSocket server. Which means to follow a topic and subscribe to an event,
 or to use it as a realtime query engine
 
 #### Using it as a websocket server
 
-Let's first start off by talking about using it as a regular websocket server.
+Let's first start off by talking about using it as a regular WebSocket server.
 This means two clients connect to the server by subscribing to the same topic.
 And then listening to the same event.
 ```
@@ -35,7 +35,7 @@ nexus.on('<name_of_event', (msg) => {
 ```
 
 
-To send to the event you’re subscribed to or someone else is subscribed to you have two options. Either emit to the topic you already connected to and push to the event. Or pick the topic and event
+To send to the event you’re subscribed to or someone else is subscribed to, you have two options. Either emit to the topic you already connected to and push to the event. Or pick the topic and event
 
 Choose which event and topic:
 `nexus.emitTo('<name_of_topic>', '<name_of_event>', {body:{<payload>}})`
@@ -43,12 +43,12 @@ Choose which event and topic:
 Emit to the topic your nexus has subscribed to earlier:
 `nexus.emit('<name_of_event>', {body:{<payload>}})`
 
-Now both clients can talk to each other. This is perfect for real time chat apps that are public. if you want a private chatapp, make sure your users are subscribed to the correct topic
-if your private messages are based on the url, use the url query parameter as the topic.
+Now both clients can talk to each other. This is perfect for real time chat apps that are public. If you want a private chatapp, make sure your users are subscribed to the correct topic
+if your private messages are based on the url, use the URL query parameter as the topic.
 
 #### Using the realtime query engine
 
-It’s almost the same as using it as a regular websocket server with a few changes 
+It’s almost the same as using it as a regular WebSocket server, with a few changes 
 ```
 nexus = await NexusRT.create('ws://<link_to_server>/realtime', jwt, {userid});
 nexus.connect();
@@ -83,35 +83,35 @@ Before you use this on postgres there are a couple of things you need to do firs
 First thing is make sure you have Wal2Json installed in Postgres. 
 if you dont know how to do that then I have created a postgres docker image with it installed.
 
-`docker pull nexusrt/postgres-wal2json:latest`
+`docker pull neexus/postgres-wal2json:latest`
 
-There's a dockerfile and docker compose file under the docker folder. That's where i setup postgres.
-You can take that file and run it. Or look at how i set it up and copy the environment variables
+There's a Dockerfile and docker compose file under the docker folder. That's where i setup postgres.
+You can take that file and run it. Or look at how I set it up and copy the environment variables
 
-these env var are the most important. Make sure these are enabled
+These env vars are the most important. Make sure these are enabled
 ```
 -c wal_level=logical
 -c max_wal_senders=10
 -c max_replication_slots=10
 ```
-go inside the postgres image and make sure you have wallevel set to logcical 
+Go inside the PostgreSQL image and make sure you have wallevel set to logcical 
 
 `ALTER SYSTEM SET wal_level = 'logical';`
- after that restart postgres.
+ After that, restart PostgreSQL.
 
  Then create a replication slot for Wal2Json
 
  `SELECT pg_create_logical_replication_slot('wal2json_slot', 'wal2json');`
 
- After that you have one more thing. By default Wal2Json does not give you all the data from a delete
- in order for nexus kairos to work correctly with deletes you need to do this last step.
+ After that, you have one more thing. By default, Wal2Json does not give you all the data from a delete
+ In order for Nexus Kairos to work correctly with delete,s you need to do this last step.
 
- Create all the tables you want to create then after you did that use this query so Wal2Json can get all data from deletes
+ Create all the tables you want to create, then, after you have done that, use this query so Wal2Json can get all data from the delete queries
 
  `ALTER TABLE <table_name> REPLICA IDENTITY FULL;`
 
- Now inserts, updates, and deletes should give you everything you need
- Also caveats for deletes. Deletes only send the id of the insert and the database operation.
+ Now, inserts, updates, and deletes should give you everything you need
+ Also, caveats for deletes. Deletes only sends the id of the insert and the database operation.
  Use that to find whatever record was deleted and delete it from memory.
 
 
@@ -120,11 +120,11 @@ go inside the postgres image and make sure you have wallevel set to logcical
  Setting up the Kairos server is really simple. This server can be used as a regular WebSocket server and or a real-time query engine. I have a Docker image for it
  `docker pull nexusrt/nexusrt:latest`
 
-You can build this yourself when you clone the repository. but the fastest way is to use the Docker image. If you made changes to the repository locally, you can build it
+You can build this yourself when you clone the repository. But the fastest way is to use the Docker image. If you made changes to the repository locally, you can build it
 `docker build -t <name_of_docker_image> .`
 
-You can use Kairos with portainer, coolify, etc or you can run it from Docker itself from a linux server. Which ever you are comfortable with.
-When using Kairos there are some env var you need to know about.
+You can use Kairos with portainer, coolify, etc or you can run it from Docker itself from a Linux server. Whichever you are comfortable with.
+When using Kairos, there are some env var you need to know about.
 
 ```
 HOSTNAME: string
@@ -175,7 +175,7 @@ I have done a couple of benchmarks. In the K6 folder, you'll find what I did. Th
 |4gb|2|10,000|✅|
 |8gb|4|10,000|✅|
 
-Based on this benchmark, I have found that a 1gb 1 cpu server from Linode can hold 10K concurrent users, but they are idled. Which means all they did was register in the Mnesia in-memory database, and received a broadcast of their query and sat there not doing anything
+Based on this benchmark, I have found that a 1gb 1 cpu server from Linode can hold 10K concurrent users, but they are idled. Which means all they did was register in the Mnesia in-memory database, received a broadcast of their query, and sat there not doing anything
 
 ## Concurrent Users(receving messages)
 |CPU|RAM|Concurrent Users|Time to complete|latency for one message|Records/s|Broadcast/s|
