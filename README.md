@@ -168,9 +168,9 @@ I have done a couple of benchmarks. In the K6 folder, you'll find what I did. Th
 ## Current Users(idle)
 |CPU|RAM|Concurrent Users|Passed|
 |-|-|-|-|
-|1GB|1|10,000|check|
-|4gb|2|10,000|check|
-|8gb|4|10,000|check|
+|1GB|1|10,000|✅|
+|4gb|2|10,000|✅|
+|8gb|4|10,000|✅|
 
 Based on this benchmark, I have found that a 1gb 1 cpu server from Linode can hold 10K concurrent users, but they are idled. Which means all they did was register in the Mnesia in-memory database, and received a broadcast of their query and sat there not doing anything
 
