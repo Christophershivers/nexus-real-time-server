@@ -167,6 +167,18 @@ ENABLE_POSTGRES: boolean
 |DATABASE_URL|Full DB connection string|postgres://<your_username>:<your_password>@<server_address>:<database_port>/<database_name>
 |ENABLE_POSTGRES|enables postgres functionality(false by default)|true/false
 
+# Pushing Realtime Messages From a Different Server
+In Kairos, it's also possible to push a realtime message from a different server to the client using HTTP. The url for that is `https://<your_domain_name>.com/realtime`.
+With the realtime route, you can push messages in realtime. In order to use this in your body, make sure you set the topic and event
+```
+{
+    "topic": "<topic>",
+    "event": "<event>",
+    "body":{<payload>}
+}
+```
+If you have auth enabled, then you will have to send the jwt as a header. In your header, use `Authorization: Bearer <jwt>`.
+
 # Security 
 
 Nexus Kairos does have security built in; in later version this will get reworked so users won't have to put the address to the websocket server itself. For now, the way security works is optional. In the Kairos server, you would set `AUTH_ENABLED` env var to true and have a JWT secret set in the env var `AUTH_SECRET`. Then in the SDK you would have the jwt set with the jwt token`nexus = await NexusRT.create('ws://<link_to_server>/realtime', jwt, {userid});`. In the future, you will be able to use HTTP-only tokens, so it won't be exposed. There are also checks on the server side for anything other than select statements for the query. Anything that has delete, update, or insert won't be accepted.
