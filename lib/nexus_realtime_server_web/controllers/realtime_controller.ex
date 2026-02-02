@@ -4,11 +4,44 @@ defmodule NexusRealtimeServerWeb.RealtimeController do
   alias NexusRealtimeServer.Auth.VerifyToken, as: Token
 
   def realtime(conn, _params) do
-    queryParams = conn.body_params
-    NexusRealtimeServerWeb.Endpoint.broadcast(queryParams["topic"], queryParams["event"], %{body: queryParams["body"]})
-    json(conn, conn.body_params)
+    with :ok <- ensure_authed(conn) do
+      query_params = conn.body_params
+
+      NexusRealtimeServerWeb.Endpoint.broadcast(
+        query_params["topic"],
+        query_params["event"],
+        %{body: query_params["body"]}
+      )
+
+      json(conn, %{ok: true})
+    else
+      {:error, :unauthorized} ->
+        conn
+        |> put_status(:unauthorized)
+        |> json(%{error: "Unauthorized"})
+    end
   end
 
+
+  defp ensure_authed(conn) do
+    if System.get_env("AUTH_ENABLED") == "true" do
+      conn
+      |> get_req_header("authorization")
+      |> List.first()
+      |> case do
+        "Bearer " <> token ->
+          case Token.verify(token) do
+            {:ok, _claims} -> :ok
+            {:error, _} -> {:error, :unauthorized}
+          end
+
+        _ ->
+          {:error, :unauthorized}
+      end
+    else
+      :ok
+    end
+  end
 
 
   def auth(conn, _params) do
