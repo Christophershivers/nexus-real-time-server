@@ -1,0 +1,40 @@
+# Elixir / Phoenix
+_build
+deps
+tmp
+cover
+doc
+erl_crash.dump
+
+# Node / assets (if present)
+node_modules
+npm-debug.log
+yarn-error.log
+pnpm-lock.yaml
+.npm
+
+# VCS / editor / OS
+.git
+*.swp
+.DS_Store
+Thumbs.db
+
+# env
+.env
+.env.*
+
+# Elixir / Phoenix build artifacts
+_build/
+deps/
+tmp/
+
+# ElixirLS (this is the big one on Windows)
+.elixir_ls/
+
+# Just in case you have colocated assets
+phoenix-colocated/
+**/phoenix-colocated/
+
+# Node (if any sneaks in)
+node_modules/
+**/node_modules/

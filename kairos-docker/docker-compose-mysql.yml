@@ -1,0 +1,107 @@
+services:
+  app:
+    image: neexus/kairos:test
+    ports:
+      - "4000:4000"
+
+    ulimits:
+      nofile:
+        soft: 200000
+        hard: 200000
+
+    sysctls:
+      net.core.somaxconn: "16384"
+      net.ipv4.ip_local_port_range: "1024 65535"
+      net.ipv4.tcp_max_syn_backlog: "8192"
+      net.ipv4.tcp_tw_reuse: "1"
+
+    extra_hosts:
+      - "host.docker.internal:host-gateway"
+
+    environment:
+      PHX_SERVER: "true"
+      PHX_HOST: "localhost"
+      PORT: "4000"
+      SECRET_KEY_BASE: "your_secret_key_at_least_64_chars_long"
+      CHECK_ORIGIN: "http://localhost:3000,http://localhost:4000"
+
+      HOSTNAME: <host_address>
+      DBUSERNAME: <username>
+      PASSWORD: <password>
+      DATABASE: <database_name>
+      DBPORT: <port>
+
+      POOL_SIZE: "40"
+      MAX_CONCURRENCY: "80"
+      BATCH_SIZE: "200"
+      CHUNK_SIZE: "50"
+
+      AUTH_SECRET: "qwertyuiopasdfghjklzxcvbnm123456"
+      AUTH_ENABLED: "true"
+
+      CORS_ORIGINS: "http://localhost:3000,http://localhost:3001,http://localhost:3002"
+      WEBSOCKET_ORIGINS: "http://localhost:3000,http://localhost:3001,http://localhost:3002"
+
+      NEXUS_DATABASE: "mysql"
+      
+      FLUSH_INTERVAL: "2000"
+
+  debeziumm:
+    image: quay.io/debezium/server:3.1.1.Final
+    container_name: debezium_server
+    depends_on:
+      - app
+    extra_hosts:
+      - "host.docker.internal:host-gateway"
+
+    environment:
+      # SINK (HTTP -> Nexus)
+      DEBEZIUM_SINK_TYPE: "http"
+      DEBEZIUM_SINK_HTTP_URL: "http://<address_to_server>:4000/realtime/d"
+
+      # SOURCE (MySQL)
+      DEBEZIUM_SOURCE_CONNECTOR_CLASS: "io.debezium.connector.mysql.MySqlConnector"
+      DEBEZIUM_SOURCE_DATABASE_HOSTNAME: <host_address>
+      DEBEZIUM_SOURCE_DATABASE_PORT: <port>
+      DEBEZIUM_SOURCE_DATABASE_USER: <username>
+      DEBEZIUM_SOURCE_DATABASE_PASSWORD: <password>
+      DEBEZIUM_SOURCE_DATABASE_SERVER_ID: "<arbitrary_number>"
+      DEBEZIUM_SOURCE_TOPIC_PREFIX: "source"
+      DEBEZIUM_SOURCE_DATABASE_INCLUDE_LIST: "<database_name>"
+      DEBEZIUM_SOURCE_TABLE_INCLUDE_LIST: "<name_of_database>.*"
+      DEBEZIUM_SOURCE_SNAPSHOT_MODE: "never"
+
+      # Schema history (NO Kafka): store in a FILE
+      DEBEZIUM_SOURCE_SCHEMA_HISTORY_INTERNAL: "io.debezium.storage.file.history.FileSchemaHistory"
+      DEBEZIUM_SOURCE_SCHEMA_HISTORY_INTERNAL_FILE_FILENAME: "/debezium/data/schema-history.dat"
+
+      # OFFSETS (file)
+      DEBEZIUM_SOURCE_OFFSET_STORAGE: "org.apache.kafka.connect.storage.FileOffsetBackingStore"
+      DEBEZIUM_SOURCE_OFFSET_STORAGE_FILE_FILENAME: "/debezium/data/offsets.dat"
+
+      # SMT unwrap
+      DEBEZIUM_TRANSFORMS: "unwrap"
+      DEBEZIUM_TRANSFORMS_UNWRAP_TYPE: "io.debezium.transforms.ExtractNewRecordState"
+      DEBEZIUM_TRANSFORMS_UNWRAP_DELETE_HANDLING_MODE: "rewrite"
+      DEBEZIUM_TRANSFORMS_UNWRAP_ADD_FIELDS: "op"
+      DEBEZIUM_TRANSFORMS_UNWRAP_DROP_TOMBSTONES: "true"
+
+      # Format
+      DEBEZIUM_FORMAT_KEY: "json"
+      DEBEZIUM_FORMAT_KEY_SCHEMAS_ENABLE: "true"
+      DEBEZIUM_FORMAT_VALUE: "json"
+      DEBEZIUM_FORMAT_VALUE_SCHEMAS_ENABLE: "true"
+
+      # Batching / polling
+      DEBEZIUM_SINK_HTTP_BATCHING_ENABLED: "true"
+      DEBEZIUM_SINK_HTTP_BATCHING_MAX_SIZE: "500"
+      DEBEZIUM_SOURCE_POLL_INTERVAL_MS: "1000"
+      DEBEZIUM_SOURCE_MAX_BATCH_SIZE: "2048"
+      DEBEZIUM_SOURCE_MAX_QUEUE_SIZE: "8192"
+
+    volumes:
+      - debezium_data:/debezium/data
+
+volumes:
+  debezium_data:
+

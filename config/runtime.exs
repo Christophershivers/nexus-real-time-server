@@ -1,46 +1,49 @@
 import Config
 import Dotenvy
 
-# config/runtime.exs is executed for all environments, including
-# during releases. It is executed after compilation and before the
-# system starts, so it is typically used to load production configuration
-# and secrets from environment variables or elsewhere. Do not define
-# any compile-time configuration in here, as it won't be applied.
-# The block below contains prod specific runtime configuration.
-
-# ## Using releases
-#
-# If you use `mix release`, you need to explicitly enable the server
-# by passing the PHX_SERVER=true when you start it:
-#
-#     PHX_SERVER=true bin/nexus_realtime_server start
-#
-# Alternatively, you can use `mix phx.gen.release` to generate a `bin/server`
-# script that automatically sets the env var above.
 env_dir_prefix = System.get_env("RELEASE_ROOT") || Path.expand(".")
 source!([
   Path.absname(".env", env_dir_prefix),
   Path.absname(".#{config_env()}.env", env_dir_prefix),
-  System.get_env() # Crucial: allows actual system vars to override files
+  System.get_env() # system vars override dotenv files
 ])
 
 filter_tables = System.get_env("FILTER_TABLES", "")
 config :nexus_realtime_server, :filter_tables, filter_tables
 
-enable_postgres =
-  System.get_env("ENABLE_POSTGRES", "false")
+flush_interval = System.get_env("FLUSH_INTERVAL", "2000")
+  |> String.to_integer()
+config :nexus_realtime_server, :flush_interval, flush_interval
+
+
+# -------------------------
+# NEXUS_DATABASE selection
+# -------------------------
+nexus_database =
+  System.get_env("NEXUS_DATABASE", "")
+  |> String.trim()
   |> String.downcase()
-  |> Kernel.==("true")
 
-config :nexus_realtime_server, :enable_postgres, enable_postgres
+config :nexus_realtime_server, :nexus_database, nexus_database
 
+# If other parts of your app still reference this, keep it derived
+#enable_postgres = nexus_database in ["postgresql", "postgres"]
+#config :nexus_realtime_server, :enable_postgres, enable_postgres
 
+nexus_database = System.get_env("NEXUS_DATABASE", "")
+    |> String.trim()
+    |> String.downcase()
+
+config :nexus_realtime_server, :nexus_database, nexus_database
+
+# -------------------------
+# CORS / WS origins
+# -------------------------
 cors_origins =
   System.get_env("CORS_ORIGINS", "http://localhost:3000")
   |> String.split(",", trim: true)
   |> Enum.map(&String.trim/1)
 
-# WebSocket Check Origins
 websocket_origins =
   System.get_env("WEBSOCKET_ORIGINS", "http://localhost:3000")
   |> String.split(",", trim: true)
@@ -49,53 +52,85 @@ websocket_origins =
 config :nexus_realtime_server, :cors_origins, cors_origins
 config :nexus_realtime_server, :websocket_origins, websocket_origins
 
-config :nexus_realtime_server, WalListener,
-    host: env!("HOSTNAME", :string),
-    user: env!("DBUSERNAME", :string),
-    password: env!("PASSWORD", :string),
-    database: env!("DATABASE", :string),
-    port: env!("DBPORT", :integer),
-    slot: env!("SLOT", :string)
+# -------------------------
+# Repo runtime config (DB-specific)
+# -------------------------
+pool_size =
+  (System.get_env("POOL_SIZE") || "10")
+  |> String.to_integer()
 
-config :nexus_realtime_server, NexusRealtimeServer.Repo,
-  username: env!("DBUSERNAME", :string),
-  password: env!("PASSWORD", :string),
-  hostname: env!("HOSTNAME", :string),
-  database: env!("DATABASE", :string),
-  port: env!("DBPORT", :integer),
-  stacktrace: true,
-  show_sensitive_data_on_connection_error: true,
-  pool_size: env!("POOL_SIZE", :integer)
+case nexus_database do
+  "postgresql" ->
+    config :nexus_realtime_server, NexusRealtimeServer.Repo,
+      username: env!("DBUSERNAME", :string),
+      password: env!("PASSWORD", :string),
+      hostname: env!("HOSTNAME", :string),
+      database: env!("DATABASE", :string),
+      port: env!("DBPORT", :integer),
+      stacktrace: true,
+      show_sensitive_data_on_connection_error: true,
+      pool_size: pool_size
 
+  "postgres" ->
+    config :nexus_realtime_server, NexusRealtimeServer.Repo,
+      username: env!("DBUSERNAME", :string),
+      password: env!("PASSWORD", :string),
+      hostname: env!("HOSTNAME", :string),
+      database: env!("DATABASE", :string),
+      port: env!("DBPORT", :integer),
+      stacktrace: true,
+      show_sensitive_data_on_connection_error: true,
+      pool_size: pool_size
 
+  "mysql" ->
+    config :nexus_realtime_server, NexusRealtimeServer.MysqlRepo,
+      username: env!("DBUSERNAME", :string),
+      password: env!("PASSWORD", :string),
+      hostname: env!("HOSTNAME", :string),
+      database: env!("DATABASE", :string),
+      port: env!("DBPORT", :integer),
+      stacktrace: true,
+      show_sensitive_data_on_connection_error: true,
+      pool_size: pool_size
 
+  "" ->
+    # no DB configured
+    :ok
+
+  other ->
+    IO.warn("Unknown NEXUS_DATABASE=#{inspect(other)}; no repo configured")
+    :ok
+end
+
+# -------------------------
+# Endpoint server enable
+# -------------------------
 if System.get_env("PHX_SERVER") do
   config :nexus_realtime_server, NexusRealtimeServerWeb.Endpoint, server: true
 end
 
+# -------------------------
+# Production release config
+# -------------------------
 if config_env() == :prod do
-  database_url =
-    System.get_env("DATABASE_URL") ||
-      raise """
-      environment variable DATABASE_URL is missing.
-      For example: ecto://USER:PASS@HOST/DATABASE
-      """
+  # Your current prod block configures DATABASE_URL for Postgres Repo.
+  # Only do that when Postgres is selected, otherwise mysql/no-db releases break.
+  if nexus_database in ["postgresql", "postgres"] do
+    database_url =
+      System.get_env("DATABASE_URL") ||
+        raise """
+        environment variable DATABASE_URL is missing.
+        For example: ecto://USER:PASS@HOST/DATABASE
+        """
 
-  maybe_ipv6 = if System.get_env("ECTO_IPV6") in ~w(true 1), do: [:inet6], else: []
+    maybe_ipv6 = if System.get_env("ECTO_IPV6") in ~w(true 1), do: [:inet6], else: []
 
-  config :nexus_realtime_server, NexusRealtimeServer.Repo,
-    # ssl: true,
-    url: database_url,
-    pool_size: String.to_integer(System.get_env("POOL_SIZE") || "10"),
-    # For machines with several cores, consider starting multiple pools of `pool_size`
-    # pool_count: 4,
-    socket_options: maybe_ipv6
+    config :nexus_realtime_server, NexusRealtimeServer.Repo,
+      url: database_url,
+      pool_size: String.to_integer(System.get_env("POOL_SIZE") || "10"),
+      socket_options: maybe_ipv6
+  end
 
-  # The secret key base is used to sign/encrypt cookies and other secrets.
-  # A default value is used in config/dev.exs and config/test.exs but you
-  # want to use a different value for prod and you most likely don't want
-  # to check this value into version control, so we use an environment
-  # variable instead.
   secret_key_base =
     System.get_env("SECRET_KEY_BASE") ||
       raise """
@@ -116,10 +151,7 @@ if config_env() == :prod do
       thousand_island_options: [
         num_acceptors: 25,
         num_connections: 20000,
-        # TRANSPORT OPTIONS MUST BE INSIDE THOUSAND_ISLAND_OPTIONS
-        transport_options: [
-          backlog: 8192
-        ]
+        transport_options: [backlog: 8192]
       ]
     ],
     secret_key_base: secret_key_base,
@@ -128,56 +160,4 @@ if config_env() == :prod do
       "http://127.0.0.1:3000",
       "http://localhost:4000"
     ]
-
-
-
-  # ## SSL Support
-  #
-  # To get SSL working, you will need to add the `https` key
-  # to your endpoint configuration:
-  #
-  #     config :nexus_realtime_server, NexusRealtimeServerWeb.Endpoint,
-  #       https: [
-  #         ...,
-  #         port: 443,
-  #         cipher_suite: :strong,
-  #         keyfile: System.get_env("SOME_APP_SSL_KEY_PATH"),
-  #         certfile: System.get_env("SOME_APP_SSL_CERT_PATH")
-  #       ]
-  #
-  # The `cipher_suite` is set to `:strong` to support only the
-  # latest and more secure SSL ciphers. This means old browsers
-  # and clients may not be supported. You can set it to
-  # `:compatible` for wider support.
-  #
-  # `:keyfile` and `:certfile` expect an absolute path to the key
-  # and cert in disk or a relative path inside priv, for example
-  # "priv/ssl/server.key". For all supported SSL configuration
-  # options, see https://hexdocs.pm/plug/Plug.SSL.html#configure/1
-  #
-  # We also recommend setting `force_ssl` in your config/prod.exs,
-  # ensuring no data is ever sent via http, always redirecting to https:
-  #
-  #     config :nexus_realtime_server, NexusRealtimeServerWeb.Endpoint,
-  #       force_ssl: [hsts: true]
-  #
-  # Check `Plug.SSL` for all available options in `force_ssl`.
-
-  # ## Configuring the mailer
-  #
-  # In production you need to configure the mailer to use a different adapter.
-  # Here is an example configuration for Mailgun:
-  #
-  #     config :nexus_realtime_server, NexusRealtimeServer.Mailer,
-  #       adapter: Swoosh.Adapters.Mailgun,
-  #       api_key: System.get_env("MAILGUN_API_KEY"),
-  #       domain: System.get_env("MAILGUN_DOMAIN")
-  #
-  # Most non-SMTP adapters require an API client. Swoosh supports Req, Hackney,
-  # and Finch out-of-the-box. This configuration is typically done at
-  # compile-time in your config/prod.exs:
-  #
-  #     config :swoosh, :api_client, Swoosh.ApiClient.Req
-  #
-  # See https://hexdocs.pm/swoosh/Swoosh.html#module-installation for details.
 end

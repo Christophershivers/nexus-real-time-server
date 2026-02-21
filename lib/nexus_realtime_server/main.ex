@@ -1,11 +1,10 @@
 defmodule NexusRealtimeServer.Main do
-  alias NexusRealtimeServer.InMemoryTopicParser
   alias NexusRealtimeServer.FetchQueries
+  alias NexusRealtimeServer.TopicParser
 
   def main(payload) do
-    IO.inspect(payload, lebel: "payload data")
-    queries = InMemoryTopicParser.parse(payload)
-    IO.inspect(queries, label: "In Main module")
+    queries = TopicParser.parse(payload)
+    IO.inspect(queries, label: "Parsed queries in Main.main")
     FetchQueries.run(queries)
   end
 end

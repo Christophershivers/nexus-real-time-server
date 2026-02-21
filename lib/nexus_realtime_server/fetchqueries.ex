@@ -1,27 +1,15 @@
 defmodule NexusRealtimeServer.FetchQueries do
-  @moduledoc """
-  Route-topic batching (per route_value topic).
-
-  Client joins:   rt:<template_key>:<route_value>
-  We broadcast:   rt:<template_key>:<route_value>
-
-  Each work item contains:
-    - template_sql: must SELECT route_key and include ANY($1)/ANY($2)
-    - template_key: stable hash identifier for the SQL shape
-    - route_values: MapSet of route values (usually ints/strings like "57")
-    - ids: list of primary keys impacted by WAL payload (e.g. post ids)
-    - event: phoenix event name to broadcast (e.g. "posts")
-    - database_op: "insert" | "update" | "delete"
-  """
-
   require Logger
 
   @max_concurrency String.to_integer(System.get_env("MAX_CONCURRENCY") || "10")
   @timeout String.to_integer(System.get_env("TIMEOUT") || "15000")
 
-
-
+  # -------------------------
+  # ENTRY
+  # -------------------------
   def run(items) when is_list(items) do
+    t0 = now_ms()
+
     items
     |> Task.async_stream(&process_item/1,
       max_concurrency: @max_concurrency,
@@ -30,74 +18,136 @@ defmodule NexusRealtimeServer.FetchQueries do
     )
     |> Stream.run()
 
+    Logger.info("fetch_run total_ms=#{now_ms() - t0} items=#{length(items)}")
     :ok
   end
 
   defp process_item(%{ids: ids}) when ids == [] or is_nil(ids), do: :ok
 
   defp process_item(item) do
-    case to_string(item.database_op) do
-      "delete" -> broadcast_deletes(item)
-      _ -> execute_batched_and_broadcast(item)
+    t0 = now_ms()
+
+    result =
+      case to_string(item.database_op) do
+        "delete" -> broadcast_deletes(item)
+        _ -> fetch_then_broadcast(item)
+      end
+
+    Logger.info(
+      "process_item template=#{item.template_key} op=#{item.database_op} " <>
+        "ids=#{length(List.wrap(item.ids))} subs=#{MapSet.size(item.sub_hashes)} " <>
+        "total_ms=#{now_ms() - t0}"
+    )
+
+    result
+  end
+
+  # ------------------------------------------------------------
+  # MAIN FETCH PATH
+  # ------------------------------------------------------------
+  defp fetch_then_broadcast(item) do
+    t0 = now_ms()
+
+    sub_hashes = MapSet.to_list(item.sub_hashes)
+    ids_param = item.ids |> List.wrap() |> Enum.uniq()
+
+    case execute_batched_query(item, ids_param) do
+      {:ok, rows, query_ms, rows_ms} ->
+        {bcast_loop_ms, bcast_count, total_rows} =
+          broadcast_rows(item, sub_hashes, rows)
+
+        Logger.info(
+          "fetch_breakdown template=#{item.template_key} " <>
+            "db=#{nexus_database()} query_ms=#{query_ms} rows_ms=#{rows_ms} " <>
+            "bcast_loop_ms=#{bcast_loop_ms} broadcasts=#{bcast_count} rows=#{total_rows} " <>
+            "total_ms=#{now_ms() - t0}"
+        )
+
+        :ok
+
+      {:error, err, query_ms} ->
+        Logger.debug(
+          "[fetch] query error template_key=#{item.template_key} db=#{nexus_database()} " <>
+            "query_ms=#{query_ms} err=#{inspect(err)}"
+        )
+
+        :ok
     end
   end
 
   # ------------------------------------------------------------
-  # Query once (route_values + ids), then split rows by route_key
-  # and broadcast to rt:<template_key>:<route_value>
+  # STEP 1: EXECUTE
   # ------------------------------------------------------------
-  defp execute_batched_and_broadcast(item) do
-    route_values =
-      item.route_values
-      |> MapSet.to_list()
+  defp execute_batched_query(item, ids_param) do
+    repo = repo_for_env()
+    sql0 = resolve_sql_for_db(item)
+    db = nexus_database()
 
-    ids_param =
-      item.ids
-      |> List.wrap()
-      |> Enum.uniq()
+    IO.inspect(item, label: "Executing query for item", charlists: :as_lists)
+    IO.inspect(sql0, label: "sql statement")
 
-    route_param = normalize_route_values(route_values)
+    {query_ms, query_result} =
+      timed_ms(fn ->
+        case db do
+          "mysql" ->
+            ids = List.wrap(ids_param)
 
-    case NexusRealtimeServer.Repo.query(item.template_sql, [route_param, ids_param], timeout: @timeout) do
-      {:ok, %Postgrex.Result{} = result} ->
-        rows = rows_to_maps(result, item.database_op)
+            if ids == [] do
+              {:ok, %{columns: [], rows: []}}
+            else
+              {sql1, flat_params} = mysql_expand_one_in_placeholder!(sql0, ids)
+              IO.inspect(flat_params, label: "mysql params", charlists: :as_lists)
+              repo.query(sql1, flat_params, timeout: @timeout)
+            end
 
-        # group rows by route_key
-        rows_by_route =
-          Enum.group_by(rows, fn row ->
-            to_string(Map.get(row, "route_key"))
-          end)
+          _ ->
+            repo.query(sql0, [ids_param], timeout: @timeout)
+        end
+      end)
 
-        Enum.each(route_values, fn rv ->
-          topic = route_topic(item.template_key, rv)
-
-          rows_for_route =
-            rows_by_route
-            |> Map.get(to_string(rv), [])
-            |> Enum.map(&Map.delete(&1, "route_key"))
-
-          if rows_for_route != [] do
-            Logger.info(
-              "broadcast topic=#{topic} event=#{item.event} rows=#{length(rows_for_route)}"
-            )
-             IO.puts("FetchQueries max_concurrency=#{@max_concurrency}")
-
-            NexusRealtimeServerWeb.Endpoint.broadcast(topic, item.event, %{rows: rows_for_route, sent_at: System.system_time(:millisecond)})
-          end
-        end)
-
-        :ok
+    case query_result do
+      {:ok, result} ->
+        {rows_ms, rows} = timed_ms(fn -> rows_to_maps(result, item.database_op) end)
+        {:ok, rows, query_ms, rows_ms}
 
       {:error, err} ->
-        Logger.debug("[fetch] query error template_key=#{item.template_key} err=#{inspect(err)}")
-        :ok
+        {:error, err, query_ms}
     end
   end
 
+  # ------------------------------------------------------------
+  # STEP 2: BROADCAST
+  # ------------------------------------------------------------
+  defp broadcast_rows(item, sub_hashes, rows) do
+    {bcast_loop_ms, bcast_count} =
+      timed_ms(fn ->
+        Enum.reduce(sub_hashes, 0, fn sub_hash, acc ->
+          topic = "rt:" <> to_string(sub_hash)
+
+          {bcast_ms, _} =
+            timed_ms(fn ->
+              NexusRealtimeServerWeb.Endpoint.broadcast(
+                topic,
+                item.event,
+                %{rows: rows, sent_at: System.system_time(:millisecond)}
+              )
+            end)
+
+          Logger.info("broadcast_call_ms=#{bcast_ms} topic=#{topic} rows=#{length(rows)}")
+          acc + 1
+        end)
+      end)
+
+    {bcast_loop_ms, bcast_count, length(rows)}
+  end
+
+  # ------------------------------------------------------------
+  # DELETE PATH
+  # ------------------------------------------------------------
   defp broadcast_deletes(item) do
-    route_values =
-      item.route_values
-      |> MapSet.to_list()
+    t0 = now_ms()
+
+    sub_hashes = MapSet.to_list(item.sub_hashes)
 
     rows =
       item.ids
@@ -105,49 +155,98 @@ defmodule NexusRealtimeServer.FetchQueries do
       |> Enum.uniq()
       |> Enum.map(fn id -> %{id: id, database_op: "delete"} end)
 
-    Enum.each(route_values, fn rv ->
-      topic = route_topic(item.template_key, rv)
-      NexusRealtimeServerWeb.Endpoint.broadcast(topic, item.event, %{rows: rows, sent_at: System.system_time(:millisecond)})
+    Enum.each(sub_hashes, fn sub_hash ->
+      topic = "rt:" <> to_string(sub_hash)
+
+      NexusRealtimeServerWeb.Endpoint.broadcast(
+        topic,
+        item.event,
+        %{rows: rows, sent_at: System.system_time(:millisecond)}
+      )
     end)
+
+    Logger.info(
+      "delete_broadcast template=#{item.template_key} subs=#{length(sub_hashes)} " <>
+        "rows=#{length(rows)} total_ms=#{now_ms() - t0}"
+    )
 
     :ok
   end
 
-  defp rows_to_maps(%Postgrex.Result{} = result, database_op) do
-    Enum.map(result.rows, fn row ->
-      result.columns
+  # ------------------------------------------------------------
+  # DB SELECTION
+  # ------------------------------------------------------------
+  defp nexus_database do
+    Application.get_env(:nexus_realtime_server, :nexus_database)
+  end
+
+  defp repo_for_env do
+    case nexus_database() do
+      "mysql" -> NexusRealtimeServer.MysqlRepo
+      "postgres" -> NexusRealtimeServer.Repo
+      "postgresql" -> NexusRealtimeServer.Repo
+      other ->
+        Logger.warning("Unknown NEXUS_DATABASE=#{inspect(other)}; defaulting to postgresql")
+        NexusRealtimeServer.Repo
+    end
+  end
+
+  defp resolve_sql_for_db(%{template_sql: sql} = _item) when is_binary(sql), do: sql
+
+  defp resolve_sql_for_db(%{template_sql: sql_map} = item) when is_map(sql_map) do
+    key =
+      case nexus_database() do
+        "mysql" -> :mysql
+        "postgres" -> :postgresql
+        "postgresql" -> :postgresql
+        _ -> :postgresql
+      end
+
+    Map.get(sql_map, key) ||
+      raise ArgumentError,
+            "Missing template_sql for #{inspect(key)} on template_key=#{inspect(item.template_key)}"
+  end
+
+  # ------------------------------------------------------------
+  # HELPERS
+  # ------------------------------------------------------------
+  defp rows_to_maps(%{columns: columns, rows: rows}, database_op)
+       when is_list(columns) and is_list(rows) do
+    Enum.map(rows, fn row ->
+      columns
       |> Enum.zip(row)
       |> Map.new()
       |> Map.put("database_op", database_op)
+      |> Map.delete("route_key") # no longer needed for routing
     end)
   end
 
-  # IMPORTANT: per-route topic
-  defp route_topic(template_key, route_value) do
-    "rt:" <> to_string(template_key) <> ":" <> to_string(route_value)
+  defp rows_to_maps(other, _database_op) do
+    raise ArgumentError,
+          "Unsupported DB result shape: expected %{columns: ..., rows: ...}, got: #{inspect(other)}"
   end
 
-  # Normalize route values for Postgrex encoding:
-  # If every value is int-like => convert to integers for userid = ANY($1)
-  defp normalize_route_values(values) when is_list(values) do
-    if Enum.all?(values, &int_like?/1) do
-      Enum.map(values, &to_int!/1)
-    else
-      Enum.map(values, &to_string/1)
-    end
+  defp timed_ms(fun) do
+    t1 = now_ms()
+    res = fun.()
+    {now_ms() - t1, res}
   end
 
-  defp int_like?(v) when is_integer(v), do: true
+  defp now_ms, do: System.monotonic_time(:millisecond)
 
-  defp int_like?(v) when is_binary(v) do
-    case Integer.parse(v) do
-      {_i, ""} -> true
-      _ -> false
-    end
+  # --- MySQL IN expansion helpers ---
+  defp mysql_expand_one_in_placeholder!(sql, values) do
+    placeholders =
+      values
+      |> Enum.map(fn _ -> "?" end)
+      |> Enum.join(",")
+
+    new_sql =
+      case String.split(sql, "IN (?)", parts: 2) do
+        [left, right] -> left <> "IN (" <> placeholders <> ")" <> right
+        _ -> raise "Expected SQL to contain `IN (?)`: #{sql}"
+      end
+
+    {new_sql, values}
   end
-
-  defp int_like?(_), do: false
-
-  defp to_int!(v) when is_integer(v), do: v
-  defp to_int!(v) when is_binary(v), do: String.to_integer(v)
 end

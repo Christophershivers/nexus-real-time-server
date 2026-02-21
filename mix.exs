@@ -70,7 +70,8 @@ defmodule NexusRealtimeServer.MixProject do
       {:elixir_uuid, "~> 1.2"},
       {:dotenvy, "~> 0.8.0"},
       {:jose, "~> 1.11"},
-      {:cors_plug, "~> 3.0"}
+      {:cors_plug, "~> 3.0"},
+      {:myxql, ">= 0.0.0"}
     ]
   end
 

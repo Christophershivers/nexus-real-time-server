@@ -2,7 +2,7 @@ defmodule WalListener do
   use GenServer
 
 
-  alias NexusRealtimeServer.Main
+
 
   def start_link(_opts) do
     config = Application.get_env(:nexus_realtime_server, WalListener)
@@ -65,7 +65,7 @@ defmodule WalListener do
 
       if public_changes != [] do
         #IO.puts("Received WAL changes:")
-        Main.main(payload)
+        #Main.main(payload)
       end
     else
       _ -> :ok

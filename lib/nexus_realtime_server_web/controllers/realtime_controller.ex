@@ -2,6 +2,7 @@ defmodule NexusRealtimeServerWeb.RealtimeController do
   use NexusRealtimeServerWeb, :controller
 
   alias NexusRealtimeServer.Auth.VerifyToken, as: Token
+  alias NexusRealtimeServer.DebeziumCollector
 
   def realtime(conn, _params) do
     with :ok <- ensure_authed(conn) do
@@ -22,7 +23,14 @@ defmodule NexusRealtimeServerWeb.RealtimeController do
     end
   end
 
+  def realtimeD(conn, _params) do
+    payload = conn.body_params
+    IO.inspect(payload, label: "Received payload in realtimeD")
+    DebeziumCollector.add_event(payload)
 
+    json(conn, %{ok: true})
+
+  end
   defp ensure_authed(conn) do
     if System.get_env("AUTH_ENABLED") == "true" do
       conn
@@ -86,4 +94,12 @@ defmodule NexusRealtimeServerWeb.RealtimeController do
     end
   end
 
+  def all(conn, _params) do
+    {:atomic, records} =
+      :mnesia.transaction(fn ->
+        :mnesia.foldl(fn record, acc -> [record | acc] end, [], :realtime_query)
+      end)
+
+    json(conn, Enum.map(records, &inspect/1))
+  end
 end

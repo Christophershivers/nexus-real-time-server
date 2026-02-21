@@ -8,18 +8,26 @@ alias NexusRealtimeServer.ETSQueryCache
 
   @impl true
   def start(_type, _args) do
-    enable_postgres = Application.get_env(:nexus_realtime_server, :enable_postgres)
+    nexus_database = Application.get_env(:nexus_realtime_server, :nexus_database)
+
+    IO.inspect(nexus_database, label: "Nexus Database")
     children = [
       NexusRealtimeServerWeb.Telemetry,
-      if(enable_postgres, do: NexusRealtimeServer.Repo, else: nil),
+      case nexus_database do
+        "postgresql" -> NexusRealtimeServer.Repo
+        "mysql" -> NexusRealtimeServer.MysqlRepo
+        _ -> nil
+      end,
       {DNSCluster, query: Application.get_env(:nexus_realtime_server, :dns_cluster_query) || :ignore},
       {Phoenix.PubSub, name: NexusRealtimeServer.PubSub},
+      {Task.Supervisor, name: NexusRealtimeServer.BatchFlushSupervisor},
       # Start a worker by calling: NexusRealtimeServer.Worker.start_link(arg)
       # {NexusRealtimeServer.Worker, arg},
       # Start to serve requests, typically the last entry
       NexusRealtimeServerWeb.Endpoint,
-      WalListener,
-      ETSQueryCache
+      ETSQueryCache,
+      NexusRealtimeServer.QueryBatcher,
+      NexusRealtimeServer.DebeziumCollector
     ]
     |> Enum.reject(&is_nil/1)
 

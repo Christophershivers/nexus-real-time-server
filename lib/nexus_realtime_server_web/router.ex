@@ -29,6 +29,8 @@ defmodule NexusRealtimeServerWeb.Router do
 
     post "/", RealtimeController, :realtime
     post "/auth", RealtimeController, :auth
+    post "/d", RealtimeController, :realtimeD
+    get "/all", RealtimeController, :all
   end
 
   # Other scopes may use custom stacks.

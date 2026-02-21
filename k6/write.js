@@ -8,14 +8,14 @@ const broadcastLatency = new Trend("broadcast_latency_ms");
 
 export const options = {
   scenarios: Object.fromEntries(
-    Array.from({ length: 5 }, (_, i) => [
+    Array.from({ length: 20 }, (_, i) => [
       `batch${i + 1}`,
       {
         executor: "per-vu-iterations",
         vus: 250,
         iterations: 1,
         startTime: `${i * 3.75}s`,
-        maxDuration: "2.5m",
+        maxDuration: "3.5m",
         gracefulStop: "30s",
       },
     ])
@@ -37,14 +37,14 @@ function phoenixFrame(joinRef, ref, topic, event, payload) {
 }
 
 export default function () {
-  const url = "ws://<your_server_address>:4000/realtime/websocket?vsn=2.0.0";
+  const url = "ws://<server_host_address>:4000/realtime/websocket?vsn=2.0.0";
 
   // The Routing ID and Channel Topic are now identical
   const userid = String(100000 + __VU);
   //change this to the correct route topic
   const channelTopic =
     __ENV.ROUTE_TOPIC ||
-    "rt:6446eee0f3058b1e579d16882291a586492ec2e6aa05bbb5713d3c0701b25e01:0";
+    "rt:624371088f3361eafd44f47e8ef6115bb625d2ee3d209bd58149d780";
 
   const params = {
     headers: { "Sec-WebSocket-Protocol": "phoenix" },
@@ -92,7 +92,7 @@ export default function () {
             field_value: "57",
             equality: "eq",
             query:
-              "select * from posts where (userid = 57) order by updated_at desc limit 5",
+              "select * from posts where (userid = 57) order by updated_at desc limit 60",
             event: "posts",        // Event to listen for
             pk: "id",
             alias: null,
@@ -124,8 +124,8 @@ export default function () {
       }
     });
 
-    // Hold connection open for 2.5 minutes
-    socket.setTimeout(() => socket.close(), 150000);
+    // Hold connection open for 3.5 minutes
+    socket.setTimeout(() => socket.close(), 210000);
 
     socket.on("close", () => {
       if (hbTimer) socket.clearInterval(hbTimer);

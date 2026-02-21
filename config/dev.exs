@@ -4,11 +4,13 @@ import Config
 
 
 # Configure your database
+config :nexus_realtime_server, :enable_postgres, true
 config :nexus_realtime_server, NexusRealtimeServer.Repo,
-  username: "postgres",
+  username: "admin",
   password: "password",
-  hostname: "localhost",
-  database: "nexus_dev",
+  hostname: "172.237.144.89",
+  database: "admin",
+  port: 5435,
   stacktrace: true,
   show_sensitive_data_on_connection_error: true,
   pool_size: 10
