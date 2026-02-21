@@ -1,6 +1,6 @@
 services:
   app:
-    image: neexus/kairos:test
+    image: neexus/kairos:latest
     ports:
       - "4000:4000"
 
