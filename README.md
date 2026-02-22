@@ -154,19 +154,19 @@ GRANT ALL PRIVILEGES ON appdb.* TO <user_name>@%
 ```
 
 then run this
-`GRANT REPLICATION CLIENT, REPLICATION SLAVE ON *.* TO `<user_name>`@`%`;`
+`GRANT REPLICATION CLIENT, REPLICATION SLAVE ON *.* TO ``<user_name>``@`%`;`
 then this
 `FLUSH PRIVILEGES;`
 
 then rerun this
-`SHOW GRANTS FOR `<user_name>`@`%`;`
+`SHOW GRANTS FOR ``<user_name>``@`%`;`
 
 now it should say
 
 ```
 Grants for <user_name>@%
 GRANT REPLICATION SLAVE, REPLICATION CLIENT ON *.* TO `<user_name>`@`%`
-GRANT ALL PRIVILEGES ON `appdb`.* TO `<user_name>`@`%`
+GRANT ALL PRIVILEGES ON `appdb`.* TO ``<user_name>``@`%`
 ```
 
  ## Setting Up Kairos Server
