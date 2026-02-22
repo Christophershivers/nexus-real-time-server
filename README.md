@@ -196,7 +196,6 @@ CORS_ORIGINS: string with commas
 WEBSOCKET_ORIGINS: string
 DATABASE_URL: string
 ENABLE_POSTGRES: boolean
-FILTER_TABLES: string
 NEXUS_DATABASE: string
 FLUSH_INTERVAL: string
 ```
@@ -216,7 +215,6 @@ FLUSH_INTERVAL: string
 |WEBSOCKET_ORIGINS|Allowed WS origins|http://localhost:3000,https://<domain_name>.com
 |DATABASE_URL|Full DB connection string|postgres://<your_username>:<your_password>@<server_address>:<database_port>/<database_name>
 |ENABLE_POSTGRES|enables postgres functionality(false by default)|true/false
-|FILTER_TABLES|allows you to add or filter out tables from wal2json(empty by default)|"\"add-tables or filter-tables\" '<schema_name>.<table_name1>,<schema_name>.<table_name2>'"|
 |NEXUS_DATABASE|Allows you to choose which database to use|postgres or mysql
 |FLUSH_INTERVAL|This is the time limit in milliseconds for how long the server waits before it broadcasts data to the users|250, 500, or 2000 
 
