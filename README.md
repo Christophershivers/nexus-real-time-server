@@ -273,7 +273,7 @@ Since I first uploaded the project i have been thinking about ways to make the b
 
 |RAM|CPU|Concurrent Users|Time to complete|latency for one message*|Records/s*|Broadcast/s|
 |-|-|-|-|-|-|-|
-|4GB|2|5,000|3s|0.05ms|20|100K
+|4GB|2|5,000|3s|50ms|20|100K
 
 ***These are batched messages, so take these statistics with a grain of salt. It's hard to quantify when the messages are batched together.**
 
