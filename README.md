@@ -109,7 +109,7 @@ ends wtih: `ends_with`
 
 `eq` is special since you can use a list with it. So if you have a list of ids or words you can use that instead of a string.
 
-#### different types of datatypes for subscription that are accepted
+#### different types of datatypes for subscription that are accepted  
 `smallint`  
 `integer`  
 `bigint`  
