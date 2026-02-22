@@ -196,7 +196,6 @@ AUTH_ENABLED: boolean
 CORS_ORIGINS: string with commas
 WEBSOCKET_ORIGINS: string
 DATABASE_URL: string
-ENABLE_POSTGRES: boolean
 NEXUS_DATABASE: string
 FLUSH_INTERVAL: string
 ```
@@ -215,7 +214,6 @@ FLUSH_INTERVAL: string
 |CORS_ORIGINS|Allowed CORS origins|http://localhost:3000,https://<domain_name>.com
 |WEBSOCKET_ORIGINS|Allowed WS origins|http://localhost:3000,https://<domain_name>.com
 |DATABASE_URL|Full DB connection string|postgres://<your_username>:<your_password>@<server_address>:<database_port>/<database_name>
-|ENABLE_POSTGRES|enables postgres functionality(false by default)|true/false
 |NEXUS_DATABASE|Allows you to choose which database to use|postgres or mysql
 |FLUSH_INTERVAL|This is the time limit in milliseconds for how long the server waits before it broadcasts data to the users|250, 500, or 2000 
 
