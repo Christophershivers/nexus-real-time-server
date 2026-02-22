@@ -163,11 +163,11 @@ then rerun this
 
 now it should say
 
-```
+````
 Grants for <user_name>@%
 GRANT REPLICATION SLAVE, REPLICATION CLIENT ON *.* TO `<user_name>`@`%`
 GRANT ALL PRIVILEGES ON `appdb`.* TO ``<user_name>``@`%`
-```
+````
 
  ## Setting Up Kairos Server
 
