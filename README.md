@@ -6,7 +6,17 @@ A developer can also use this as a regular WebSocket server
 So far, only PostgreSQL works natively, but other databases will be accepted. Suchas Mysql, Cassandra, SQLite, etc
 There will be a feature that allows any database to be accepted, but you won't be able to listen to the database
 
-
+# Supported Databases
+|Name|Supported|
+|-|-|
+|PostgreSQL|✅
+|MySQL|✅
+|SQLite|❌
+|MS SQL Server|❌
+|MongoDB|❌
+|Cassandra|❌
+|ScyllaDB|❌
+|DynamoDB|❌
 
 # Quick Start
 
@@ -83,6 +93,42 @@ nexus.on('<name_of_event>', (msg) => {
 The event name is the same event you put in the subscribeAndJoinRoutes.
 #### different types of SQL statements
 . The only SQL statements that are accepted are select, from, join, where, groupBy, having, orderBy, and limit.
+
+#### different types of SQL statements
+. The only SQL statements that are accepted are select, from, join, where, groupBy, having, orderBy, and limit.
+The only comparsions you have are:
+equals: `eq`
+not equals: `!eq`
+greater than: `gt`
+less than: `lt`
+greater than equal to: `gte`
+less than equal to: `lte`
+contains: `contains`
+starts with: `starts_with`
+ends wtih: `ends_with`
+
+`eq` is special since you can use a list with it. So if you have a list of ids or words you can use that instead of a string.
+
+#### different types of datatypes that are accepted
+`smallint`
+`integer`
+`bigint`
+`real`
+`double precision`
+`numeric`
+`decimal`
+`double`
+`bigserial`
+`int32`
+`int64`
+
+`boolean`
+`date`
+`uuid`
+
+`text`
+`character varying`
+`varchar`
 
 ## Setting Up Postgres
 
@@ -200,7 +246,7 @@ I have done a couple of benchmarks. In the K6 folder, you'll find what I did. Th
 
 Based on this benchmark, I have found that a 1gb 1 cpu server from Linode can hold 10K concurrent users, but they are idled. Which means all they did was register in the Mnesia in-memory database, received a broadcast of their query, and sat there not doing anything
 
-## Concurrent Users(receving messages)
+## (old)Concurrent Users(receving messages)
 |RAM|CPU|Concurrent Users|Time to complete|latency for one message|Records/s|Broadcast/s|
 |-|-|-|-|-|-|-|
 |1GB|1|5,000|20s|333ms|3|15K
@@ -221,6 +267,16 @@ To put this into perspective, if a server has 1250 concurrent users and they wer
 
 Based on these results, if 1250 users are listening to user id 0-3 each, then it would take 7 seconds to complete 60 messages for each user. This would mean each message took 117ms, 8.5 records per user per second, with a broadcast of 42.8k/s.
 All of these benchmarks are under the k6 folder.
+
+## Updated Results
+Since I first uploaded the project i have been thinking about ways to make the broadcasting faster. I came up with the solution of batching. Before this update, the broadcasting would happen sequentially. Based on testing, the time increased linearly. If you double the resources (cpu and ram), then the time it takes to send to the user halves. Now with this update, instead of sending it sequentially, the messages are sent in batches. You can set how long the server waits until it sends messages. You can do that by setting this environment variable `FLUSH_INTERVAL`, which defaults to 2000ms (2 seconds). The more you increase the resources, the lower the number you can use. In later updates i will implement sharded topics so the server can handle 1M concurrent users. The end goal is for 1M concurrent users to receive 60 messages in under 1 second.
+
+|RAM|CPU|Concurrent Users|Time to complete|latency for one message*|Records/s*|Broadcast/s|
+|-|-|-|-|-|-|-|
+|4GB|2|5,000|3s|0.05ms|20|100K
+
+***These are batched messages, so take these statistics with a grain of salt. It's hard to quantify when the messages are batched together.**
+
 
 # NexusRealtimeServer
 
