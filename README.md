@@ -109,26 +109,24 @@ ends wtih: `ends_with`
 
 `eq` is special since you can use a list with it. So if you have a list of ids or words you can use that instead of a string.
 
-#### different types of datatypes that are accepted
-`smallint`
-`integer`
-`bigint`
-`real`
-`double precision`
-`numeric`
-`decimal`
-`double`
-`bigserial`
-`int32`
-`int64`
-
-`boolean`
-`date`
-`uuid`
-
-`text`
-`character varying`
-`varchar`
+#### different types of datatypes for subscription that are accepted
+`smallint`  
+`integer`  
+`bigint`  
+`real`  
+`double precision`  
+`numeric`  
+`decimal`  
+`double`  
+`bigserial`  
+`int32`  
+`int64`  
+`boolean`  
+`date`  
+`uuid`  
+`text`  
+`character varying`  
+`varchar`  
 
 ## Setting Up Postgres
 
