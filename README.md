@@ -144,7 +144,7 @@ The previous instructions would have you setup Wal2Json; this new version doesn'
 Just like PostgreSQL setting up MySQL is simple. You need to supply a user who has replication access. You can use the root user, just make sure the password is changed. Let's say you dont want to use the root user account. Let's see how would you be able to make an account and give it privelvges for replciation.
 first sign in as a user with full priveleges like the root user. then run this to see what permissions the user has
 
-`SHOW GRANTS FOR `<user_name>`@`%`;`
+``SHOW GRANTS FOR `<username>`@`%`;``
 
 If it says this
 ```
@@ -154,7 +154,7 @@ GRANT ALL PRIVILEGES ON appdb.* TO <user_name>@%
 ```
 
 then run this
-`GRANT REPLICATION CLIENT, REPLICATION SLAVE ON *.* TO ``<user_name>``@`%`;`
+``GRANT REPLICATION CLIENT, REPLICATION SLAVE ON *.* TO `<username>`@`%`;``
 then this
 `FLUSH PRIVILEGES;`
 
