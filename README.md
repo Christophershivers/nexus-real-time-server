@@ -96,16 +96,16 @@ The only SQL statements that are accepted are select, from, join, where, groupBy
 
 #### different types of SQL statements
 The only SQL statements that are accepted are select, from, join, where, groupBy, having, orderBy, and limit.
-The only comparsions you have are:
-equals: `eq`
-not equals: `!eq`
-greater than: `gt`
-less than: `lt`
-greater than equal to: `gte`
-less than equal to: `lte`
-contains: `contains`
-starts with: `starts_with`
-ends wtih: `ends_with`
+The only comparsions you have are:  
+equals: `eq`  
+not equals: `!eq`  
+greater than: `gt`  
+less than: `lt`  
+greater than equal to: `gte`  
+less than equal to: `lte`  
+contains: `contains`  
+starts with: `starts_with`  
+ends wtih: `ends_with`  
 
 `eq` is special since you can use a list with it. So if you have a list of ids or words you can use that instead of a string.
 
