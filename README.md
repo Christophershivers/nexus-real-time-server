@@ -130,41 +130,14 @@ ends wtih: `ends_with`
 
 ## Setting Up Postgres
 
-Before you use this on postgres there are a couple of things you need to do first. 
-First thing is make sure you have Wal2Json installed in Postgres. 
-if you dont know how to do that then I have created a postgres docker image with it installed.
-
-`docker pull neexus/postgres-wal2json:latest`
-
-There's a Dockerfile and docker compose file under the docker folder. That's where i setup postgres.
-You can take that file and run it. Or look at how I set it up and copy the environment variables
-
-These env vars are the most important. Make sure these are enabled
-```
--c wal_level=logical
--c max_wal_senders=10
--c max_replication_slots=10
-```
-Go inside the PostgreSQL image and make sure you have wallevel set to logcical if the environment variable didn't work
-
-`ALTER SYSTEM SET wal_level = 'logical';`
- After that, restart PostgreSQL.
-
- Then create a replication slot for Wal2Json
-
- `SELECT pg_create_logical_replication_slot('wal2json_slot', 'wal2json');`
-
- After that, you have one more thing. By default, Wal2Json does not give you all the data from a delete
- In order for Nexus Kairos to work correctly with delete,s you need to do this last step.
-
- Create all the tables you want to create, then, after you have done that, use this query so Wal2Json can get all data from the delete queries
-
- `ALTER TABLE <table_name> REPLICA IDENTITY FULL;`
-
- Now, inserts, updates, and deletes should give you everything you need
- Also, caveats for deletes. Deletes only sends the id of the insert and the database operation.
- Use that to find whatever record was deleted and delete it from memory.
-
+The previous instructions would have you setup Wal2Json; this new version doesn't use Wal2Json. Since we are now using Debezium for change data capture, we are using pgout. Pgout is native to PostgreSql so there's no need to install anything. Nor do anything extra. Just make sure you set all of the neccesaary settings in the docker compose file for debezium. Which is   
+`DEBEZIUM_SOURCE_DATABASE_HOSTNAME`  
+`DEBEZIUM_SOURCE_DATABASE_PORT`  
+`DEBEZIUM_SOURCE_DATABASE_USER`  
+`DEBEZIUM_SOURCE_DATABASE_PASSWORD`  
+`DEBEZIUM_SOURCE_DATABASE_DBNAME`  
+`DEBEZIUM_SOURCE_PUBLICATION_NAME`  
+`DEBEZIUM_SINK_HTTP_URL`  
 
  ## Setting Up Kairos Server
 
