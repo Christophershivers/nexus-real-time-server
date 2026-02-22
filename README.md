@@ -96,7 +96,7 @@ The only SQL statements that are accepted are select, from, join, where, groupBy
 
 #### different types of SQL statements
 The only SQL statements that are accepted are select, from, join, where, groupBy, having, orderBy, and limit.
-The only comparsions you have are:  
+The only comparsions you have are: 
 equals: `eq`  
 not equals: `!eq`  
 greater than: `gt`  
