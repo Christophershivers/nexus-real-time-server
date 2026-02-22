@@ -3,7 +3,7 @@
 This is a realtime server that can listen to a PostgreSQL database in realtime and emit updates based on your initial query.
 A developer can also use this as a regular WebSocket server
 
-So far, only PostgreSQL works natively, but other databases will be accepted. Suchas Mysql, Cassandra, SQLite, etc
+So far, only PostgreSQL and MySQL work natively, but other databases will be accepted. Suchas Cassandra, SQLite, etc
 There will be a feature that allows any database to be accepted, but you won't be able to listen to the database
 
 # Supported Databases
@@ -92,10 +92,10 @@ nexus.on('<name_of_event>', (msg) => {
 ```
 The event name is the same event you put in the subscribeAndJoinRoutes.
 #### different types of SQL statements
-. The only SQL statements that are accepted are select, from, join, where, groupBy, having, orderBy, and limit.
+The only SQL statements that are accepted are select, from, join, where, groupBy, having, orderBy, and limit.
 
 #### different types of SQL statements
-. The only SQL statements that are accepted are select, from, join, where, groupBy, having, orderBy, and limit.
+The only SQL statements that are accepted are select, from, join, where, groupBy, having, orderBy, and limit.
 The only comparsions you have are:
 equals: `eq`
 not equals: `!eq`
