@@ -137,7 +137,37 @@ The previous instructions would have you setup Wal2Json; this new version doesn'
 `DEBEZIUM_SOURCE_DATABASE_PASSWORD`  
 `DEBEZIUM_SOURCE_DATABASE_DBNAME`  
 `DEBEZIUM_SOURCE_PUBLICATION_NAME`  
-`DEBEZIUM_SINK_HTTP_URL`  
+`DEBEZIUM_SINK_HTTP_URL` 
+
+## Setting Up MySQL
+
+Just like PostgreSQL setting up MySQL is simple. You need to supply a user who has replication access. You can use the root user, just make sure the password is changed. Let's say you dont want to use the root user account. Let's see how would you be able to make an account and give it privelvges for replciation.
+first sign in as a user with full priveleges like the root user. then run this to see what permissions the user has
+
+`SHOW GRANTS FOR `<user_name>`@`%`;`
+
+If it says this
+```
+Grants for <user_name>@%
+GRANT USAGE ON *.* TO <user_name>@%
+GRANT ALL PRIVILEGES ON appdb.* TO <user_name>@%
+```
+
+then run this
+`GRANT REPLICATION CLIENT, REPLICATION SLAVE ON *.* TO `<user_name>`@`%`;`
+then this
+`FLUSH PRIVILEGES;`
+
+then rerun this
+`SHOW GRANTS FOR `<user_name>`@`%`;`
+
+now it should say
+
+```
+Grants for <user_name>@%
+GRANT REPLICATION SLAVE, REPLICATION CLIENT ON *.* TO `<user_name>`@`%`
+GRANT ALL PRIVILEGES ON `appdb`.* TO `<user_name>`@`%`
+```
 
  ## Setting Up Kairos Server
 
