@@ -13,7 +13,6 @@ There will be a feature that allows any database to be accepted, but you won't b
 |MySQL|✅
 |SQLite|❌
 |MS SQL Server|❌
-|MongoDB|❌
 |Cassandra|❌
 |ScyllaDB|❌
 |DynamoDB|❌
